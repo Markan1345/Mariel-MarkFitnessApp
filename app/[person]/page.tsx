@@ -9,7 +9,7 @@ import { StartWorkoutSheet } from "@/components/StartWorkoutSheet";
 import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { isPersonId, PEOPLE } from "@/lib/people";
-import { isWeekday, planForWeekday } from "@/lib/programs";
+import { planForDate } from "@/lib/programs";
 import { workoutFromChoice, type StartChoice } from "@/lib/start";
 import { activeWorkoutForPerson, linkWorkouts, workoutsForPerson } from "@/lib/store";
 import { greeting, workoutsThisWeek } from "@/lib/stats";
@@ -33,8 +33,7 @@ export default function PersonHome({
   const week = workoutsThisWeek(personWorkouts);
   const lastFinished = recent[0];
 
-  const day = new Date().getDay();
-  const todayPlan = isWeekday(day) ? planForWeekday(state.plans, personId, day) : undefined;
+  const todayPlan = planForDate(state.plans, personId, new Date());
   const latestLb = latestWeight(state.weights, personId);
 
   function saveNew(choice: StartChoice) {

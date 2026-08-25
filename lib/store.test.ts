@@ -113,6 +113,29 @@ describe("store", () => {
     expect(parsed.workouts[0].exercises[0].kind).toBe("strength");
   });
 
+  it("fills weekStart on older custom plans", () => {
+    const parsed = parseState(
+      JSON.stringify({
+        version: 2,
+        workouts: [],
+        plans: [
+          {
+            id: "plan_old",
+            personId: "mark",
+            title: "Monday lift",
+            weekday: 1,
+            exercises: [{ name: "Back squat", kind: "strength" }],
+            source: "custom",
+            createdAt: "2026-08-25T00:00:00.000Z",
+          },
+        ],
+        weights: [],
+      }),
+    );
+    expect(parsed.plans[0].weekStart).toBeNull();
+    expect(parsed.plans[0].title).toBe("Monday lift");
+  });
+
   it("creates cardio entries without lifting sets", () => {
     const workout = createWorkout({
       personId: "mariel",

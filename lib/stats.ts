@@ -1,10 +1,9 @@
 import type { PersonId, Workout } from "./types";
+import { startOfLocalDay, startOfWeek } from "./weekdays";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export function startOfLocalDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
+export { startOfLocalDay };
 
 export function formatDateLabel(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -35,10 +34,7 @@ export function formatDuration(startedAt: string, endedAt: string | null, now = 
 }
 
 export function workoutsThisWeek(workouts: Workout[], now = new Date()): Workout[] {
-  const today = startOfLocalDay(now);
-  const weekday = today.getDay();
-  const mondayOffset = weekday === 0 ? 6 : weekday - 1;
-  const weekStart = new Date(today.getTime() - mondayOffset * DAY_MS);
+  const weekStart = startOfWeek(now);
   return workouts.filter((workout) => {
     if (!workout.finishedAt && new Date(workout.startedAt) < weekStart) return false;
     return new Date(workout.startedAt) >= weekStart;

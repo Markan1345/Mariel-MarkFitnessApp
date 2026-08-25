@@ -1,5 +1,6 @@
 import type { CustomPlan, PersonId, PlannedExercise, Weekday, WorkoutProgram } from "./types";
 import { createId } from "./ids";
+import { WEEKDAYS, weekStartKey } from "./weekdays";
 
 function lifts(...names: string[]): PlannedExercise[] {
   return names.map((name) => ({ name, kind: "strength" as const }));
@@ -159,18 +160,24 @@ export const WORKOUT_PROGRAMS: WorkoutProgram[] = [
   },
 ];
 
+function sameWeekStart(left: string | null | undefined, right: string | null | undefined): boolean {
+  return (left ?? null) === (right ?? null);
+}
+
 export function createPlan(input: {
   personId: PersonId;
   title: string;
   weekday: Weekday | null;
   exercises: PlannedExercise[];
   source?: CustomPlan["source"];
+  weekStart?: string | null;
 }): CustomPlan {
   return {
     id: createId("plan"),
     personId: input.personId,
     title: input.title,
     weekday: input.weekday,
+    weekStart: input.weekStart ?? null,
     exercises: input.exercises,
     source: input.source ?? "custom",
     createdAt: new Date().toISOString(),
@@ -187,21 +194,119 @@ export function planForWeekday(
   plans: CustomPlan[],
   personId: PersonId,
   weekday: Weekday,
+  weekStart?: string | null,
 ): CustomPlan | undefined {
-  return plansForPerson(plans, personId).find((plan) => plan.weekday === weekday);
+  const personPlans = plansForPerson(plans, personId);
+  if (weekStart) {
+    const specific = personPlans.find(
+      (plan) => plan.weekday === weekday && plan.weekStart === weekStart,
+    );
+    if (specific) return specific;
+  }
+  return personPlans.find((plan) => plan.weekday === weekday && !plan.weekStart);
+}
+
+export function planForDate(
+  plans: CustomPlan[],
+  personId: PersonId,
+  date: Date,
+): CustomPlan | undefined {
+  const weekday = date.getDay();
+  if (!isWeekday(weekday)) return undefined;
+  return planForWeekday(plans, personId, weekday, weekStartKey(date));
 }
 
 export function upsertPlan(plans: CustomPlan[], next: CustomPlan): CustomPlan[] {
-  const withoutSameDay = next.weekday === null
-    ? plans
-    : plans.filter(
-        (plan) => !(plan.personId === next.personId && plan.weekday === next.weekday && plan.id !== next.id),
-      );
+  const withoutSameDay =
+    next.weekday === null
+      ? plans
+      : plans.filter(
+          (plan) =>
+            !(
+              plan.personId === next.personId &&
+              plan.weekday === next.weekday &&
+              sameWeekStart(plan.weekStart, next.weekStart) &&
+              plan.id !== next.id
+            ),
+        );
   const index = withoutSameDay.findIndex((plan) => plan.id === next.id);
   if (index === -1) return [next, ...withoutSameDay];
   const copy = [...withoutSameDay];
   copy[index] = next;
   return copy;
+}
+
+export function savePlanForWeek(
+  plans: CustomPlan[],
+  plan: CustomPlan,
+  alsoUsual: boolean,
+): CustomPlan[] {
+  const next = upsertPlan(plans, plan);
+  if (!alsoUsual || plan.weekday === null) return next;
+  const repeating = next.find(
+    (item) =>
+      item.personId === plan.personId &&
+      item.weekday === plan.weekday &&
+      !item.weekStart &&
+      item.id !== plan.id,
+  );
+  return upsertPlan(
+    next,
+    repeating
+      ? {
+          ...repeating,
+          title: plan.title,
+          exercises: plan.exercises.map((exercise) => ({ ...exercise })),
+        }
+      : createPlan({
+          personId: plan.personId,
+          title: plan.title,
+          weekday: plan.weekday,
+          weekStart: null,
+          exercises: plan.exercises.map((exercise) => ({ ...exercise })),
+          source: plan.source,
+        }),
+  );
+}
+
+export function copyWeekPlans(
+  plans: CustomPlan[],
+  personId: PersonId,
+  fromWeekStart: string,
+  toWeekStart: string,
+): CustomPlan[] {
+  if (fromWeekStart === toWeekStart) return plans;
+  let next = plans;
+  for (const day of WEEKDAYS) {
+    const source = planForWeekday(next, personId, day.id, fromWeekStart);
+    if (!source) continue;
+    const existing = next.find(
+      (plan) =>
+        plan.personId === personId &&
+        plan.weekday === day.id &&
+        plan.weekStart === toWeekStart,
+    );
+    next = upsertPlan(
+      next,
+      existing
+        ? {
+            ...existing,
+            title: source.title,
+            exercises: source.exercises.map((exercise) => ({ ...exercise })),
+            weekday: day.id,
+            weekStart: toWeekStart,
+          }
+        : createPlan({
+            personId,
+            title: source.title,
+            weekday: day.id,
+            weekStart: toWeekStart,
+            exercises: source.exercises.map((exercise) => ({ ...exercise })),
+            source: "custom",
+          }),
+    );
+  }
+  return next;
 }
 
 export function deletePlan(plans: CustomPlan[], id: string): CustomPlan[] {

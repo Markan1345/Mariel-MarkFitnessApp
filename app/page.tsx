@@ -13,7 +13,7 @@ import {
   linkWorkouts,
   workoutsForPerson,
 } from "@/lib/store";
-import { isWeekday, planForWeekday } from "@/lib/programs";
+import { planForDate } from "@/lib/programs";
 import { workoutFromChoice } from "@/lib/start";
 import { workoutHref } from "@/lib/routes";
 import { groupWorkoutsByDay, workoutsThisWeek } from "@/lib/stats";
@@ -92,8 +92,7 @@ export default function TogetherHome() {
             const workouts = workoutsForPerson(state, id);
             const week = workoutsThisWeek(workouts);
             const current = live[id];
-            const day = new Date().getDay();
-            const todayPlan = isWeekday(day) ? planForWeekday(state.plans, id, day) : undefined;
+            const todayPlan = planForDate(state.plans, id, new Date());
             const latestLb = latestWeight(state.weights, id);
             return (
               <section key={id} className={`person-${id} rounded-3xl border border-line bg-paper p-4`}>
