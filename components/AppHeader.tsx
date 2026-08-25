@@ -30,7 +30,7 @@ export function AppHeader({
         <p className="text-[11px] tracking-[0.2em] text-muted uppercase">{person.name}</p>
         <h1 className="font-display text-xl leading-none">{title}</h1>
       </div>
-      <span className="accent-bg grid h-8 w-8 place-items-center rounded-full text-xs font-semibold text-paper">
+      <span className="accent-bg grid h-8 w-8 place-items-center rounded-full text-[10px] font-semibold tracking-wide text-paper">
         {person.short}
       </span>
     </header>

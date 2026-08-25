@@ -12,14 +12,14 @@ export const PEOPLE: Record<PersonId, Person> = {
   mark: {
     id: "mark",
     name: "Mark",
-    short: "M",
+    short: "MK",
     blurb: "Your sessions, your numbers.",
     accent: "mark",
   },
   mariel: {
     id: "mariel",
     name: "Mariel",
-    short: "R",
+    short: "ML",
     blurb: "Show up, log it, keep going.",
     accent: "mariel",
   },

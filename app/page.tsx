@@ -29,7 +29,7 @@ export default function HomePage() {
                   <h2 className="font-display mt-1 text-3xl">{person.name}</h2>
                   <p className="mt-1 text-sm text-muted">{person.blurb}</p>
                 </div>
-                <span className="accent-bg grid h-12 w-12 place-items-center rounded-full text-lg font-semibold text-paper">
+                <span className="accent-bg grid h-12 w-12 place-items-center rounded-full text-xs font-semibold tracking-wide text-paper">
                   {person.short}
                 </span>
               </div>
