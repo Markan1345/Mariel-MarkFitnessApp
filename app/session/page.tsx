@@ -8,7 +8,7 @@ import { PersonTabs } from "@/components/PersonTabs";
 import { WorkoutEditor } from "@/components/WorkoutEditor";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
 import { isPersonId, PEOPLE } from "@/lib/people";
-import { isWeekday, planForWeekday, plansForPerson } from "@/lib/programs";
+import { planForDate, plansForPerson } from "@/lib/programs";
 import { activeWorkoutForPerson, finishWorkout, linkWorkouts, workoutsForPerson } from "@/lib/store";
 import { workoutFromChoice } from "@/lib/start";
 import { useFitnessStore } from "@/lib/use-fitness-store";
@@ -111,10 +111,7 @@ function SessionPageInner() {
           <EmptyPersonStart
             personId={active}
             lastTitle={last?.title}
-            todayPlan={(() => {
-              const day = new Date().getDay();
-              return isWeekday(day) ? planForWeekday(state.plans, active, day) : undefined;
-            })()}
+            todayPlan={planForDate(state.plans, active, new Date())}
             customPlans={plansForPerson(state.plans, active).slice(0, 4)}
             onStartEmpty={() => startForActive({ type: "empty" })}
             onRepeat={last ? () => startForActive({ type: "repeat", workout: last }) : undefined}

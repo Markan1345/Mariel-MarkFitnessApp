@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
 import { PEOPLE, PERSON_IDS } from "@/lib/people";
-import { isWeekday, planForWeekday, plansForPerson } from "@/lib/programs";
+import { planForDate, plansForPerson } from "@/lib/programs";
 import { defaultStartChoices, type StartChoice } from "@/lib/start";
 import type { CustomPlan, PersonId, Workout } from "@/lib/types";
 import { WEEKDAYS } from "@/lib/weekdays";
@@ -49,7 +49,6 @@ function TogetherStartSheetInner({
     defaultStartChoices(plans),
   );
   const now = new Date();
-  const today = now.getDay();
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40 p-3 sm:items-center">
@@ -75,7 +74,7 @@ function TogetherStartSheetInner({
               personId={id}
               last={lastWorkouts[id]}
               plans={plansForPerson(plans, id)}
-              todayPlan={isWeekday(today) ? planForWeekday(plans, id, today) : undefined}
+              todayPlan={planForDate(plans, id, now)}
               value={choices[id]}
               onChange={(choice) => setChoices((current) => ({ ...current, [id]: choice }))}
             />

@@ -1,6 +1,7 @@
 import type {
   AppState,
   CardioLog,
+  CustomPlan,
   ExerciseEntry,
   ExerciseKind,
   PersonId,
@@ -57,6 +58,15 @@ function normalizeWorkout(workout: Workout): Workout {
   };
 }
 
+function normalizePlan(plan: CustomPlan): CustomPlan {
+  return {
+    ...plan,
+    weekday: plan.weekday ?? null,
+    weekStart: plan.weekStart ?? null,
+    exercises: plan.exercises ?? [],
+  };
+}
+
 export function parseState(raw: string | null): AppState {
   if (!raw) return emptyState();
   try {
@@ -65,7 +75,7 @@ export function parseState(raw: string | null): AppState {
       return {
         version: 2,
         workouts: parsed.workouts.map(normalizeWorkout),
-        plans: parsed.plans ?? [],
+        plans: (parsed.plans ?? []).map(normalizePlan),
         weights: parsed.weights ?? [],
       };
     }

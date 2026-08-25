@@ -57,6 +57,8 @@ export interface CustomPlan {
   personId: PersonId;
   title: string;
   weekday: Weekday | null;
+  /** Monday YYYY-MM-DD for a specific week, or null for the repeating usual day. */
+  weekStart: string | null;
   exercises: PlannedExercise[];
   source: "custom" | "import";
   createdAt: string;

@@ -1,4 +1,4 @@
-import { isWeekday, planForWeekday } from "@/lib/programs";
+import { planForDate } from "@/lib/programs";
 import { createWorkout, duplicateWorkout } from "@/lib/store";
 import type { CustomPlan, PersonId, Workout, WorkoutTemplate } from "@/lib/types";
 
@@ -33,10 +33,8 @@ export function defaultStartChoices(
   plans: CustomPlan[],
   now = new Date(),
 ): Record<PersonId, StartChoice> {
-  const today = now.getDay();
   const forPerson = (personId: PersonId): StartChoice => {
-    if (!isWeekday(today)) return { type: "empty" };
-    const plan = planForWeekday(plans, personId, today);
+    const plan = planForDate(plans, personId, now);
     return plan ? { type: "plan", plan } : { type: "empty" };
   };
   return { mark: forPerson("mark"), mariel: forPerson("mariel") };

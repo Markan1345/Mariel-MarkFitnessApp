@@ -38,6 +38,7 @@ describe("workoutFromChoice", () => {
         weekday: 2,
         source: "custom",
         createdAt: "2026-08-25T00:00:00.000Z",
+        weekStart: null,
         exercises: [
           { name: "Goblet squat", kind: "strength" },
           { name: "Treadmill", kind: "cardio" },
@@ -57,11 +58,36 @@ describe("workoutFromChoice", () => {
       weekday: 2 as const,
       source: "custom" as const,
       createdAt: "2026-08-25T00:00:00.000Z",
+      weekStart: null,
       exercises: [{ name: "Treadmill", kind: "cardio" as const }],
     };
     const choices = defaultStartChoices([marielPlan], tuesday);
     expect(choices.mariel).toEqual({ type: "plan", plan: marielPlan });
     expect(choices.mark).toEqual({ type: "empty" });
     expect(workoutFromChoice("mariel", choices.mariel).exercises[0].name).toBe("Treadmill");
+  });
+
+  it("uses a next-week plan once that week arrives", () => {
+    const usual = {
+      id: "plan_usual",
+      personId: "mariel" as const,
+      title: "Usual Tuesday",
+      weekday: 2 as const,
+      source: "custom" as const,
+      createdAt: "2026-08-25T00:00:00.000Z",
+      weekStart: null,
+      exercises: [{ name: "Goblet squat", kind: "strength" as const }],
+    };
+    const nextWeek = {
+      ...usual,
+      id: "plan_next",
+      title: "Next Tuesday",
+      weekStart: "2026-08-31",
+      exercises: [{ name: "Hip thrust", kind: "strength" as const }],
+    };
+    const thisWeek = defaultStartChoices([usual, nextWeek], new Date("2026-08-25T12:00:00"));
+    expect(thisWeek.mariel).toEqual({ type: "plan", plan: usual });
+    const arrived = defaultStartChoices([usual, nextWeek], new Date("2026-09-01T12:00:00"));
+    expect(arrived.mariel).toEqual({ type: "plan", plan: nextWeek });
   });
 });
