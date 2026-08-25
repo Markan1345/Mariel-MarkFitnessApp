@@ -2,6 +2,7 @@
 
 import { SetRow } from "./SetRow";
 import { CardioBlock } from "./CardioBlock";
+import { AppIcon } from "./AppIcon";
 import { estimateExerciseCalories, formatCalories } from "@/lib/calories";
 import { kindForExercise } from "@/lib/exercises";
 import type { ExerciseEntry, SetEntry } from "@/lib/types";
@@ -37,11 +38,17 @@ export function ExerciseBlock({
   const kcal = Math.round(estimateExerciseCalories(exercise, bodyWeightLb));
 
   return (
-    <section className="rounded-3xl border border-line bg-paper p-4">
+    <section className="surface-card p-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-2xl leading-tight">{exercise.name}</h3>
-          {kcal > 0 ? <p className="mt-1 text-xs text-muted">Est. {formatCalories(kcal)}</p> : null}
+        <div className="flex items-center gap-3">
+          <span className="accent-soft accent-text grid h-10 w-10 shrink-0 place-items-center rounded-2xl">
+            <AppIcon name="dumbbell" className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="eyebrow">Strength</p>
+            <h3 className="font-display text-2xl leading-tight">{exercise.name}</h3>
+            {kcal > 0 ? <p className="mt-1 text-xs font-bold text-muted">Est. {formatCalories(kcal)}</p> : null}
+          </div>
         </div>
         <button type="button" onClick={onRemove} className="text-xs text-muted">
           Remove
@@ -61,15 +68,16 @@ export function ExerciseBlock({
       <button
         type="button"
         onClick={onAddSet}
-        className="mt-2 w-full rounded-2xl bg-line/60 py-2 text-sm font-medium"
+        className="accent-soft accent-text mt-2 flex w-full items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-extrabold"
       >
+        <AppIcon name="plus" className="h-4 w-4" />
         Add set
       </button>
       <input
         value={exercise.notes}
         onChange={(event) => onChange({ ...exercise, notes: event.target.value })}
         placeholder="Notes for this exercise"
-        className="mt-3 w-full rounded-2xl border border-line bg-bg px-3 py-2 text-sm"
+        className="input-shell mt-3 w-full px-3 py-2 text-sm"
       />
     </section>
   );

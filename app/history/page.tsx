@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { AppIcon } from "@/components/AppIcon";
 import { AppNav } from "@/components/AppNav";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { PERSON_IDS, PEOPLE } from "@/lib/people";
@@ -22,12 +23,20 @@ export default function HistoryPage() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-3">
-        <p className="text-sm tracking-[0.22em] text-muted uppercase">Together</p>
-        <h1 className="font-display mt-2 text-4xl leading-none">History</h1>
+      <header className="px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="eyebrow">Training log</p>
+            <h1 className="font-display mt-1 text-[2.65rem] leading-none">Workout history</h1>
+            <p className="mt-2 text-sm text-muted">Every session adds to the streak.</p>
+          </div>
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-sun text-ink shadow-[0_8px_18px_rgba(231,138,52,0.25)]">
+            <AppIcon name="history" className="h-6 w-6" />
+          </div>
+        </div>
       </header>
       <main className="flex-1 px-5 pb-8">
-        <div className="grid grid-cols-3 gap-1 rounded-full bg-line/70 p-1">
+        <div className="segmented-control grid grid-cols-3 gap-1">
           <FilterChip selected={filter === "both"} onClick={() => setFilter("both")}>
             Both
           </FilterChip>
@@ -38,7 +47,10 @@ export default function HistoryPage() {
           ))}
         </div>
         {days.length === 0 ? (
-          <div className="mt-6 rounded-3xl border border-dashed border-line px-4 py-10 text-center">
+          <div className="surface-card mt-6 border-dashed px-4 py-10 text-center">
+            <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-sun/30 text-gold">
+              <AppIcon name="dumbbell" className="h-6 w-6" />
+            </span>
             <p className="font-display text-3xl">Still a blank page</p>
             <p className="mt-2 text-sm text-muted">
               Finished workouts for both of you will collect here, day by day.
@@ -48,7 +60,7 @@ export default function HistoryPage() {
           <div className="mt-6 grid gap-6">
             {days.map((day) => (
               <section key={day.key} className="grid gap-2">
-                <p className="text-xs tracking-[0.16em] text-muted uppercase" suppressHydrationWarning>
+                <p className="eyebrow" suppressHydrationWarning>
                   {day.date.toLocaleDateString(undefined, {
                     weekday: "long",
                     month: "short",
@@ -91,7 +103,9 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full py-2 text-sm font-medium ${selected ? "bg-paper text-ink" : "text-muted"}`}
+      className={`rounded-[0.85rem] py-2.5 text-sm font-extrabold ${
+        selected ? "bg-ink text-paper shadow-sm" : "text-muted"
+      }`}
     >
       {children}
     </button>

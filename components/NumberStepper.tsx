@@ -33,10 +33,10 @@ export function NumberStepper({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       <button
         type="button"
-        className="grid h-9 w-9 place-items-center rounded-full bg-line/80 text-lg leading-none"
+        className="grid h-9 w-9 place-items-center rounded-xl bg-line/70 text-lg font-bold leading-none"
         onClick={() => bump(-step)}
         aria-label="Decrease"
       >
@@ -44,7 +44,7 @@ export function NumberStepper({
       </button>
       <input
         inputMode="decimal"
-        className="h-9 w-20 rounded-xl border border-line bg-paper text-center tabular-nums"
+        className="input-shell h-9 w-20 text-center font-extrabold tabular-nums"
         value={text}
         onFocus={(event) => {
           setDraft(text);
@@ -56,7 +56,7 @@ export function NumberStepper({
       {suffix ? <span className="min-w-6 px-0.5 text-xs text-muted">{suffix}</span> : null}
       <button
         type="button"
-        className="grid h-9 w-9 place-items-center rounded-full bg-line/80 text-lg leading-none"
+        className="accent-bg grid h-9 w-9 place-items-center rounded-xl text-lg font-bold leading-none text-paper"
         onClick={() => bump(step)}
         aria-label="Increase"
       >

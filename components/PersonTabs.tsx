@@ -13,7 +13,7 @@ export function PersonTabs({
   live: Partial<Record<PersonId, boolean>>;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-1 rounded-full bg-line/70 p-1">
+    <div className="segmented-control grid grid-cols-2 gap-1">
       {PERSON_IDS.map((id) => {
         const selected = active === id;
         return (
@@ -21,8 +21,8 @@ export function PersonTabs({
             key={id}
             type="button"
             onClick={() => onChange(id)}
-            className={`person-${id} rounded-full px-3 py-2 text-sm font-semibold ${
-              selected ? "accent-bg text-paper" : "text-ink"
+            className={`person-${id} rounded-[0.85rem] px-3 py-2.5 text-sm font-extrabold transition ${
+              selected ? "accent-bg text-paper shadow-sm" : "text-muted"
             }`}
           >
             {PEOPLE[id].name}

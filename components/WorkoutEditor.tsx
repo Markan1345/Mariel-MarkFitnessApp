@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { AppIcon } from "./AppIcon";
 import { ExerciseBlock } from "./ExerciseBlock";
 import { ExercisePicker } from "./ExercisePicker";
 import {
@@ -53,22 +54,39 @@ export function WorkoutEditor({
 
   return (
     <>
+      <p className="eyebrow">Live workout</p>
       <input
         value={workout.title}
         onChange={(event) => onChange({ ...workout, title: event.target.value })}
-        className="font-display w-full bg-transparent text-4xl leading-none outline-none"
+        className="font-display mt-1 w-full bg-transparent text-4xl leading-none outline-none"
       />
-      <p className="mt-2 text-sm text-muted">
-        {duration}
-        {minutes > 0 ? ` · ${minutes} min cardio` : ""}
-        {sets.total > 0 ? ` · ${sets.done}/${sets.total} sets` : ""}
-        {` · est. ${formatCalories(kcal)}`}
-      </p>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs font-extrabold text-muted">
+        <span className="flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 shadow-sm">
+          <AppIcon name="timer" className="h-3.5 w-3.5 text-energy" />
+          {duration}
+        </span>
+        {minutes > 0 ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 shadow-sm">
+            <AppIcon name="activity" className="h-3.5 w-3.5 text-energy" />
+            {minutes} min cardio
+          </span>
+        ) : null}
+        {sets.total > 0 ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 shadow-sm">
+            <AppIcon name="dumbbell" className="h-3.5 w-3.5 text-energy" />
+            {sets.done}/{sets.total} sets
+          </span>
+        ) : null}
+        <span className="flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 shadow-sm">
+          <AppIcon name="spark" className="h-3.5 w-3.5 text-energy" />
+          est. {formatCalories(kcal)}
+        </span>
+      </div>
       <textarea
         value={workout.notes}
         onChange={(event) => onChange({ ...workout, notes: event.target.value })}
         placeholder="Session notes"
-        className="mt-4 w-full resize-none rounded-2xl border border-line bg-paper px-3 py-2 text-sm"
+        className="input-shell mt-4 w-full resize-none px-3 py-2 text-sm"
         rows={2}
       />
 
@@ -90,8 +108,9 @@ export function WorkoutEditor({
       <button
         type="button"
         onClick={() => setPickerOpen(true)}
-        className="mt-4 w-full rounded-3xl border border-dashed border-line py-4 font-medium"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-[1.25rem] border-2 border-dashed border-energy/40 bg-energy/5 py-4 font-extrabold text-energy"
       >
+        <AppIcon name="plus" className="h-5 w-5" />
         Add lift or cardio
       </button>
 
@@ -100,7 +119,7 @@ export function WorkoutEditor({
           <button
             type="button"
             onClick={() => onFinish()}
-            className="accent-bg w-full rounded-3xl py-4 text-lg font-semibold text-paper"
+            className="accent-action w-full py-4 text-lg"
           >
             {finishLabel}
           </button>

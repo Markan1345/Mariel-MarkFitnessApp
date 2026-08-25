@@ -51,10 +51,13 @@ function TogetherStartSheetInner({
   const now = new Date();
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40 p-3 sm:items-center">
-      <div className="flex max-h-[90svh] w-full max-w-[430px] flex-col rounded-3xl bg-paper p-5 shadow-2xl">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/55 p-3 backdrop-blur-sm sm:items-center">
+      <div className="surface-card flex max-h-[90svh] w-full max-w-[430px] flex-col p-5 shadow-2xl">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-3xl">Start both</h2>
+          <div>
+            <p className="eyebrow">Team session</p>
+            <h2 className="font-display text-3xl">Start both</h2>
+          </div>
           <button type="button" onClick={onClose} className="text-sm text-muted">
             Close
           </button>
@@ -83,7 +86,7 @@ function TogetherStartSheetInner({
         <button
           type="button"
           onClick={() => onStart(choices)}
-          className="mt-4 w-full rounded-2xl bg-ink py-3 font-semibold text-paper"
+          className="primary-action mt-4 w-full py-3"
         >
           Start both workouts
         </button>
@@ -122,7 +125,7 @@ function PersonChoices({
     <section className={`person-${personId} mb-5`}>
       <div className="mb-2 flex items-center justify-between">
         <h3 className="font-display text-2xl">{person.name}</h3>
-        <span className="accent-bg grid h-7 w-7 place-items-center rounded-full text-[10px] font-semibold text-paper">
+        <span className="accent-bg grid h-8 w-8 place-items-center rounded-xl text-[10px] font-extrabold text-paper">
           {person.short}
         </span>
       </div>
@@ -188,10 +191,10 @@ function ChoiceButton({
       type="button"
       onClick={onClick}
       className={`rounded-2xl border px-3 py-3 text-left ${
-        selected ? "accent-soft border-transparent" : "border-line bg-bg"
+        selected ? "accent-soft border-transparent shadow-sm" : "border-line bg-paper"
       }`}
     >
-      <span className="font-medium">{title}</span>
+      <span className="font-extrabold">{title}</span>
       <span className="mt-1 block text-xs text-muted">{subtitle}</span>
     </button>
   );

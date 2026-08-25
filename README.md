@@ -1,4 +1,4 @@
-# Mark & Mariel Fitness
+# Lifting Together
 
 A shared mobile website for two people. Log both sessions at the same time, including custom days, imported lifting programs, cardio, estimated calories, and body weight in pounds.
 
