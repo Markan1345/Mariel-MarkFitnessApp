@@ -7,6 +7,7 @@ import { WorkoutEditor } from "@/components/WorkoutEditor";
 import { isPersonId } from "@/lib/people";
 import { finishWorkout, getWorkout } from "@/lib/store";
 import { useFitnessStore } from "@/lib/use-fitness-store";
+import { bodyWeightPounds } from "@/lib/weight";
 
 export default function WorkoutPage({
   params,
@@ -43,6 +44,7 @@ export default function WorkoutPage({
         <WorkoutEditor
           workout={workout}
           onChange={upsert}
+          bodyWeightLb={bodyWeightPounds(state.weights, personId)}
           onFinish={() => {
             upsert(finishWorkout(workout));
             router.push("/");

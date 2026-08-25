@@ -1,20 +1,60 @@
-import type { AppState, ExerciseEntry, PersonId, SetEntry, Workout } from "./types";
+import type {
+  AppState,
+  CardioLog,
+  ExerciseEntry,
+  ExerciseKind,
+  PersonId,
+  PlannedExercise,
+  SetEntry,
+  Workout,
+} from "./types";
 import { createId } from "./ids";
+import { kindForExercise } from "./exercises";
 
 export const STORAGE_KEY = "mm-fitness-v1";
 
 export function emptyState(): AppState {
-  return { version: 1, workouts: [] };
+  return { version: 2, workouts: [], plans: [], weights: [] };
+}
+
+export function isLegacyState(value: unknown): value is { version: 1; workouts: Workout[] } {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { version?: unknown; workouts?: unknown };
+  return candidate.version === 1 && Array.isArray(candidate.workouts);
 }
 
 export function isAppState(value: unknown): value is AppState {
   if (!value || typeof value !== "object") return false;
   const candidate = value as AppState;
-  return candidate.version === 1 && Array.isArray(candidate.workouts);
+  return (
+    candidate.version === 2 &&
+    Array.isArray(candidate.workouts) &&
+    (candidate.plans === undefined || Array.isArray(candidate.plans)) &&
+    (candidate.weights === undefined || Array.isArray(candidate.weights))
+  );
+}
+
+function defaultCardio(): CardioLog {
+  return { minutes: 20, distanceMiles: null, intensity: "moderate" };
+}
+
+export function normalizeExercise(exercise: ExerciseEntry): ExerciseEntry {
+  const kind: ExerciseKind = exercise.kind ?? kindForExercise(exercise.name);
+  return {
+    ...exercise,
+    kind,
+    notes: exercise.notes ?? "",
+    sets: kind === "strength" ? exercise.sets ?? [] : exercise.sets ?? [],
+    cardio: kind === "cardio" ? (exercise.cardio ?? defaultCardio()) : null,
+  };
 }
 
 function normalizeWorkout(workout: Workout): Workout {
-  return { ...workout, pairId: workout.pairId ?? null };
+  return {
+    ...workout,
+    pairId: workout.pairId ?? null,
+    exercises: (workout.exercises ?? []).map(normalizeExercise),
+  };
 }
 
 export function parseState(raw: string | null): AppState {
@@ -22,7 +62,20 @@ export function parseState(raw: string | null): AppState {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (isAppState(parsed)) {
-      return { ...parsed, workouts: parsed.workouts.map(normalizeWorkout) };
+      return {
+        version: 2,
+        workouts: parsed.workouts.map(normalizeWorkout),
+        plans: parsed.plans ?? [],
+        weights: parsed.weights ?? [],
+      };
+    }
+    if (isLegacyState(parsed)) {
+      return {
+        version: 2,
+        workouts: parsed.workouts.map(normalizeWorkout),
+        plans: [],
+        weights: [],
+      };
     }
   } catch {
     return emptyState();
@@ -73,12 +126,28 @@ export function createSet(partial?: Partial<SetEntry>): SetEntry {
   };
 }
 
-export function createExercise(name: string, setCount = 1): ExerciseEntry {
+export function createExercise(
+  name: string,
+  kind: ExerciseKind = kindForExercise(name),
+  setCount = 1,
+): ExerciseEntry {
+  if (kind === "cardio") {
+    return {
+      id: createId("ex"),
+      name,
+      kind,
+      notes: "",
+      sets: [],
+      cardio: defaultCardio(),
+    };
+  }
   return {
     id: createId("ex"),
     name,
+    kind,
     notes: "",
     sets: Array.from({ length: setCount }, () => createSet()),
+    cardio: null,
   };
 }
 
@@ -86,10 +155,13 @@ export function createWorkout(input: {
   personId: PersonId;
   title: string;
   exerciseNames?: string[];
+  planned?: PlannedExercise[];
   startedAt?: string;
   pairId?: string | null;
 }): Workout {
-  const exercises = (input.exerciseNames ?? []).map((name) => createExercise(name));
+  const planned =
+    input.planned ??
+    (input.exerciseNames ?? []).map((name) => ({ name, kind: kindForExercise(name) }));
   return {
     id: createId("wo"),
     personId: input.personId,
@@ -97,14 +169,14 @@ export function createWorkout(input: {
     startedAt: input.startedAt ?? new Date().toISOString(),
     finishedAt: null,
     notes: "",
-    exercises,
+    exercises: planned.map((item) => createExercise(item.name, item.kind)),
     pairId: input.pairId ?? null,
   };
 }
 
 export function createPairedWorkouts(input: {
-  mark: { title: string; exerciseNames?: string[] };
-  mariel: { title: string; exerciseNames?: string[] };
+  mark: { title: string; exerciseNames?: string[]; planned?: PlannedExercise[] };
+  mariel: { title: string; exerciseNames?: string[]; planned?: PlannedExercise[] };
   startedAt?: string;
 }): { mark: Workout; mariel: Workout } {
   const pairId = createId("pair");
@@ -127,10 +199,14 @@ export function upsertWorkouts(state: AppState, workouts: Workout[]): AppState {
   return workouts.reduce((next, workout) => upsertWorkout(next, workout), state);
 }
 
-export function addExercise(workout: Workout, name: string): Workout {
+export function addExercise(
+  workout: Workout,
+  name: string,
+  kind: ExerciseKind = kindForExercise(name),
+): Workout {
   return {
     ...workout,
-    exercises: [...workout.exercises, createExercise(name)],
+    exercises: [...workout.exercises, createExercise(name, kind)],
   };
 }
 
@@ -156,6 +232,7 @@ export function removeExercise(workout: Workout, exerciseId: string): Workout {
 
 export function addSet(workout: Workout, exerciseId: string): Workout {
   return updateExercise(workout, exerciseId, (exercise) => {
+    if (exercise.kind === "cardio") return exercise;
     const last = exercise.sets[exercise.sets.length - 1];
     return {
       ...exercise,
@@ -210,24 +287,36 @@ export function duplicateWorkout(
     startedAt,
     finishedAt: null,
     pairId: null,
-    exercises: workout.exercises.map((exercise) => ({
-      ...exercise,
-      id: createId("ex"),
-      sets: exercise.sets.map((set) =>
-        createSet({
-          reps: set.reps,
-          weight: set.weight,
-          completed: false,
-        }),
-      ),
-    })),
+    exercises: workout.exercises.map((exercise) =>
+      normalizeExercise({
+        ...exercise,
+        id: createId("ex"),
+        sets: exercise.sets.map((set) =>
+          createSet({
+            reps: set.reps,
+            weight: set.weight,
+            completed: false,
+          }),
+        ),
+        cardio: exercise.cardio ? { ...exercise.cardio } : null,
+      }),
+    ),
   };
 }
 
 export function completedSetCount(workout: Workout): { done: number; total: number } {
-  const sets = workout.exercises.flatMap((exercise) => exercise.sets);
+  const sets = workout.exercises
+    .filter((exercise) => (exercise.kind ?? "strength") === "strength")
+    .flatMap((exercise) => exercise.sets);
   return {
     done: sets.filter((set) => set.completed).length,
     total: sets.length,
   };
+}
+
+export function cardioMinutes(workout: Workout): number {
+  return workout.exercises.reduce((sum, exercise) => {
+    if (exercise.kind !== "cardio") return sum;
+    return sum + (exercise.cardio?.minutes ?? 0);
+  }, 0);
 }

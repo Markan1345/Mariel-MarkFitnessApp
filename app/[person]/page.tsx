@@ -9,10 +9,12 @@ import { StartWorkoutSheet } from "@/components/StartWorkoutSheet";
 import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { isPersonId, PEOPLE } from "@/lib/people";
-import { activeWorkoutForPerson, createWorkout, duplicateWorkout, linkWorkouts, workoutsForPerson } from "@/lib/store";
+import { isWeekday, planForWeekday } from "@/lib/programs";
+import { workoutFromChoice, type StartChoice } from "@/lib/start";
+import { activeWorkoutForPerson, linkWorkouts, workoutsForPerson } from "@/lib/store";
 import { greeting, workoutsThisWeek } from "@/lib/stats";
 import { useFitnessStore } from "@/lib/use-fitness-store";
-import type { WorkoutTemplate } from "@/lib/types";
+import { bodyWeightPounds, latestWeight } from "@/lib/weight";
 
 export default function PersonHome({
   params,
@@ -31,27 +33,17 @@ export default function PersonHome({
   const week = workoutsThisWeek(personWorkouts);
   const lastFinished = recent[0];
 
-  function saveNew(workout: ReturnType<typeof createWorkout>) {
+  const day = new Date().getDay();
+  const todayPlan = isWeekday(day) ? planForWeekday(state.plans, personId, day) : undefined;
+  const latestLb = latestWeight(state.weights, personId);
+
+  function saveNew(choice: StartChoice) {
+    const workout = workoutFromChoice(personId, choice);
     const otherId = personId === "mark" ? "mariel" : "mark";
     const other = activeWorkoutForPerson(state, otherId);
     if (other) upsertMany(linkWorkouts(workout, other));
     else upsert(workout);
-  }
-
-  function startSession(template?: WorkoutTemplate) {
-    const workout = createWorkout({
-      personId,
-      title: template?.title ?? "Workout",
-      exerciseNames: template?.exercises,
-    });
-    saveNew(workout);
     setSheetOpen(false);
-    router.push(`/session?person=${personId}`);
-  }
-
-  function repeatLast() {
-    if (!lastFinished) return;
-    saveNew(duplicateWorkout(lastFinished));
     router.push(`/session?person=${personId}`);
   }
 
@@ -69,6 +61,7 @@ export default function PersonHome({
             <p className="text-sm font-medium">This week</p>
             <p className="text-sm text-muted">
               {week.length} session{week.length === 1 ? "" : "s"}
+              {latestLb ? ` · ${latestLb.pounds} lb` : ""}
             </p>
           </div>
           <WeekStrip workouts={personWorkouts} />
@@ -93,10 +86,18 @@ export default function PersonHome({
             >
               Start workout
             </button>
-            {lastFinished ? (
+            {todayPlan ? (
               <button
                 type="button"
-                onClick={repeatLast}
+                onClick={() => saveNew({ type: "plan", plan: todayPlan })}
+                className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
+              >
+                Start today · {todayPlan.title}
+              </button>
+            ) : lastFinished ? (
+              <button
+                type="button"
+                onClick={() => saveNew({ type: "repeat", workout: lastFinished })}
                 className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
               >
                 Repeat {lastFinished.title}
@@ -122,7 +123,11 @@ export default function PersonHome({
           ) : (
             <div className="grid gap-3">
               {recent.map((workout) => (
-                <WorkoutCard key={workout.id} workout={workout} />
+                <WorkoutCard
+                  key={workout.id}
+                  workout={workout}
+                  bodyWeightLb={bodyWeightPounds(state.weights, personId)}
+                />
               ))}
             </div>
           )}
@@ -132,7 +137,10 @@ export default function PersonHome({
       <StartWorkoutSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        onStart={startSession}
+        personId={personId}
+        last={lastFinished}
+        plans={state.plans}
+        onStart={saveNew}
       />
     </div>
   );

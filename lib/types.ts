@@ -10,6 +10,10 @@ export type MuscleGroup =
   | "cardio"
   | "full-body";
 
+export type ExerciseKind = "strength" | "cardio";
+export type CardioIntensity = "easy" | "moderate" | "hard";
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
 export interface SetEntry {
   id: string;
   reps: number | null;
@@ -17,11 +21,24 @@ export interface SetEntry {
   completed: boolean;
 }
 
+export interface CardioLog {
+  minutes: number | null;
+  distanceMiles: number | null;
+  intensity: CardioIntensity;
+}
+
 export interface ExerciseEntry {
   id: string;
   name: string;
+  kind?: ExerciseKind;
   notes: string;
   sets: SetEntry[];
+  cardio: CardioLog | null;
+}
+
+export interface PlannedExercise {
+  name: string;
+  kind: ExerciseKind;
 }
 
 export interface Workout {
@@ -35,14 +52,34 @@ export interface Workout {
   pairId: string | null;
 }
 
+export interface CustomPlan {
+  id: string;
+  personId: PersonId;
+  title: string;
+  weekday: Weekday | null;
+  exercises: PlannedExercise[];
+  source: "custom" | "import";
+  createdAt: string;
+}
+
+export interface WeightEntry {
+  id: string;
+  personId: PersonId;
+  date: string;
+  pounds: number;
+}
+
 export interface AppState {
-  version: 1;
+  version: 2;
   workouts: Workout[];
+  plans: CustomPlan[];
+  weights: WeightEntry[];
 }
 
 export interface ExerciseTemplate {
   name: string;
   group: MuscleGroup;
+  kind: ExerciseKind;
 }
 
 export interface WorkoutTemplate {
@@ -50,4 +87,17 @@ export interface WorkoutTemplate {
   title: string;
   group: MuscleGroup;
   exercises: string[];
+}
+
+export interface ProgramDay {
+  title: string;
+  weekday: Weekday | null;
+  exercises: PlannedExercise[];
+}
+
+export interface WorkoutProgram {
+  id: string;
+  title: string;
+  blurb: string;
+  days: ProgramDay[];
 }

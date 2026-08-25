@@ -13,9 +13,11 @@ import {
   linkWorkouts,
   workoutsForPerson,
 } from "@/lib/store";
+import { isWeekday, planForWeekday } from "@/lib/programs";
 import { workoutFromChoice } from "@/lib/start";
 import { groupWorkoutsByDay, workoutsThisWeek } from "@/lib/stats";
 import { useFitnessStore } from "@/lib/use-fitness-store";
+import { bodyWeightPounds, latestWeight } from "@/lib/weight";
 import type { PersonId, Workout } from "@/lib/types";
 
 export default function TogetherHome() {
@@ -47,8 +49,19 @@ export default function TogetherHome() {
         <p className="text-sm tracking-[0.22em] text-muted uppercase">Together</p>
         <h1 className="font-display mt-2 text-4xl leading-none">Mark &amp; Mariel</h1>
         <p className="mt-3 max-w-[34ch] text-sm leading-relaxed text-muted">
-          Log both sessions at once. Different days, different lifts, same screen.
+          Log both sessions at once. Custom days, imported lifts, cardio, and body weight in pounds.
         </p>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <Link href="/plans" className="rounded-2xl border border-line bg-paper px-3 py-3 text-sm">
+            Custom days
+          </Link>
+          <Link href="/weight" className="rounded-2xl border border-line bg-paper px-3 py-3 text-sm">
+            Body weight
+          </Link>
+          <Link href="/history" className="rounded-2xl border border-line bg-paper px-3 py-3 text-sm">
+            History
+          </Link>
+        </div>
       </header>
 
       <main className="flex-1 px-5 pb-8">
@@ -78,6 +91,9 @@ export default function TogetherHome() {
             const workouts = workoutsForPerson(state, id);
             const week = workoutsThisWeek(workouts);
             const current = live[id];
+            const day = new Date().getDay();
+            const todayPlan = isWeekday(day) ? planForWeekday(state.plans, id, day) : undefined;
+            const latestLb = latestWeight(state.weights, id);
             return (
               <section key={id} className={`person-${id} rounded-3xl border border-line bg-paper p-4`}>
                 <div className="mb-3 flex items-center justify-between">
@@ -85,6 +101,8 @@ export default function TogetherHome() {
                     <h2 className="font-display text-2xl">{person.name}</h2>
                     <p className="text-sm text-muted">
                       {week.length} session{week.length === 1 ? "" : "s"} this week
+                      {todayPlan ? ` · today: ${todayPlan.title}` : ""}
+                      {latestLb ? ` · ${latestLb.pounds} lb` : ""}
                     </p>
                   </div>
                   <span className="accent-bg grid h-9 w-9 place-items-center rounded-full text-[10px] font-semibold text-paper">
@@ -139,6 +157,7 @@ export default function TogetherHome() {
                       key={workout.id}
                       workout={workout}
                       showPerson
+                      bodyWeightLb={bodyWeightPounds(state.weights, workout.personId)}
                       href={
                         workout.finishedAt
                           ? `/${workout.personId}/workout/${workout.id}`
@@ -157,6 +176,7 @@ export default function TogetherHome() {
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         lastWorkouts={last}
+        plans={state.plans}
         onStart={startBoth}
       />
     </div>

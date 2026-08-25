@@ -28,5 +28,23 @@ describe("workoutFromChoice", () => {
     expect(repeated.title).toBe("Custom pull");
     expect(repeated.exercises[0].name).toBe("Pull-up");
     expect(repeated.finishedAt).toBeNull();
+
+    const fromPlan = workoutFromChoice("mariel", {
+      type: "plan",
+      plan: {
+        id: "plan_1",
+        personId: "mariel",
+        title: "Tuesday custom",
+        weekday: 2,
+        source: "custom",
+        createdAt: "2026-08-25T00:00:00.000Z",
+        exercises: [
+          { name: "Goblet squat", kind: "strength" },
+          { name: "Treadmill", kind: "cardio" },
+        ],
+      },
+    });
+    expect(fromPlan.title).toBe("Tuesday custom");
+    expect(fromPlan.exercises.map((item) => item.kind)).toEqual(["strength", "cardio"]);
   });
 });

@@ -8,10 +8,12 @@ import { PersonTabs } from "@/components/PersonTabs";
 import { WorkoutEditor } from "@/components/WorkoutEditor";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
 import { isPersonId, PEOPLE } from "@/lib/people";
+import { isWeekday, planForWeekday, plansForPerson } from "@/lib/programs";
 import { activeWorkoutForPerson, finishWorkout, linkWorkouts, workoutsForPerson } from "@/lib/store";
 import { workoutFromChoice } from "@/lib/start";
 import { useFitnessStore } from "@/lib/use-fitness-store";
-import type { PersonId, WorkoutTemplate } from "@/lib/types";
+import { bodyWeightPounds } from "@/lib/weight";
+import type { CustomPlan, PersonId, WorkoutTemplate } from "@/lib/types";
 
 export default function SessionPage() {
   return (
@@ -93,6 +95,7 @@ function SessionPageInner() {
               onChange={upsert}
               onFinish={finishActive}
               finishLabel={`Finish ${person.name}`}
+              bodyWeightLb={bodyWeightPounds(state.weights, active)}
             />
             {live.mark && live.mariel ? (
               <button
@@ -108,9 +111,15 @@ function SessionPageInner() {
           <EmptyPersonStart
             personId={active}
             lastTitle={last?.title}
+            todayPlan={(() => {
+              const day = new Date().getDay();
+              return isWeekday(day) ? planForWeekday(state.plans, active, day) : undefined;
+            })()}
+            customPlans={plansForPerson(state.plans, active).slice(0, 4)}
             onStartEmpty={() => startForActive({ type: "empty" })}
             onRepeat={last ? () => startForActive({ type: "repeat", workout: last }) : undefined}
             onTemplate={(template) => startForActive({ type: "template", template })}
+            onPlan={(plan) => startForActive({ type: "plan", plan })}
           />
         )}
       </main>
@@ -122,15 +131,21 @@ function SessionPageInner() {
 function EmptyPersonStart({
   personId,
   lastTitle,
+  todayPlan,
+  customPlans,
   onStartEmpty,
   onRepeat,
   onTemplate,
+  onPlan,
 }: {
   personId: PersonId;
   lastTitle?: string;
+  todayPlan?: CustomPlan;
+  customPlans: CustomPlan[];
   onStartEmpty: () => void;
   onRepeat?: () => void;
   onTemplate: (template: WorkoutTemplate) => void;
+  onPlan: (plan: CustomPlan) => void;
 }) {
   const person = PEOPLE[personId];
   const otherName = personId === "mark" ? "Mariel" : "Mark";
@@ -138,15 +153,34 @@ function EmptyPersonStart({
     <div className="pt-4">
       <h2 className="font-display text-4xl leading-none">{person.name} isn&apos;t lifting yet</h2>
       <p className="mt-3 text-sm text-muted">
-        Start a session here without leaving {otherName}&apos;s workout.
+        Start today&apos;s custom workout, cardio, or a lifting template without leaving {otherName}.
       </p>
-      <button
-        type="button"
-        onClick={onStartEmpty}
-        className="accent-bg mt-5 w-full rounded-3xl py-4 font-semibold text-paper"
-      >
-        Start empty workout
-      </button>
+      {todayPlan ? (
+        <button
+          type="button"
+          onClick={() => onPlan(todayPlan)}
+          className="accent-bg mt-5 w-full rounded-3xl py-4 font-semibold text-paper"
+        >
+          Start today · {todayPlan.title}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onStartEmpty}
+          className="accent-bg mt-5 w-full rounded-3xl py-4 font-semibold text-paper"
+        >
+          Start empty workout
+        </button>
+      )}
+      {todayPlan ? (
+        <button
+          type="button"
+          onClick={onStartEmpty}
+          className="mt-2 w-full rounded-3xl border border-line bg-paper py-3 font-medium"
+        >
+          Start empty workout
+        </button>
+      ) : null}
       {onRepeat ? (
         <button
           type="button"
@@ -155,6 +189,24 @@ function EmptyPersonStart({
         >
           Repeat {lastTitle}
         </button>
+      ) : null}
+      {customPlans.length > 0 ? (
+        <>
+          <p className="mt-5 text-xs tracking-[0.18em] text-muted uppercase">Custom days</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {customPlans.map((plan) => (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => onPlan(plan)}
+                className="rounded-2xl border border-line bg-paper px-3 py-3 text-left"
+              >
+                <span className="font-medium">{plan.title}</span>
+                <span className="mt-1 block text-xs text-muted">{plan.exercises.length} moves</span>
+              </button>
+            ))}
+          </div>
+        </>
       ) : null}
       <p className="mt-5 text-xs tracking-[0.18em] text-muted uppercase">Templates</p>
       <div className="mt-3 grid grid-cols-2 gap-2">

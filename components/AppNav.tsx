@@ -13,7 +13,8 @@ export function AppNav() {
   );
   const items = [
     { href: "/", label: "Together", match: pathname === "/" },
-    { href: "/history", label: "History", match: pathname.startsWith("/history") },
+    { href: "/plans", label: "Plans", match: pathname.startsWith("/plans") },
+    { href: "/weight", label: "Weight", match: pathname.startsWith("/weight") },
     {
       href: "/session",
       label: live ? "Session" : "Lift",
@@ -22,8 +23,8 @@ export function AppNav() {
   ];
 
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-line bg-paper/95 px-2 py-3 backdrop-blur">
-      <div className="grid grid-cols-3 items-center">
+    <nav className="sticky bottom-0 z-20 border-t border-line bg-paper/95 px-1 py-3 backdrop-blur">
+      <div className="grid grid-cols-4 items-center">
         {items.map((item) => (
           <Link
             key={item.href}

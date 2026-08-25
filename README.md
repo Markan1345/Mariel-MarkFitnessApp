@@ -1,16 +1,17 @@
 # Mark & Mariel Fitness
 
-A shared workout tracker for two people. Log both sessions at the same time: different exercises, reps, and weights, on the same screen.
+A shared workout tracker for two people. Log both sessions at the same time, including custom days, imported lifting programs, cardio, estimated calories, and body weight in pounds.
 
 ## What you can do
 
-- Start both workouts together, with a different template for each person
-- Flip between **Mark** and **Mariel** while a session is live
-- Log each person's exercises, weight, and reps independently
-- Finish one person and keep going with the other, or finish both
-- Browse a combined history, or filter to one person
+- Start both workouts together, with a different session for each person
+- Build a **custom workout for each weekday**
+- Import weight programs (5x5, push/pull/legs, upper/lower, and more) or a JSON file
+- Track cardio with minutes, miles, and intensity
+- See **estimated calories** from lifts and cardio (uses the latest body weight in lb)
+- Log **body weight in pounds**, view it by date, and follow the trend
 
-Data stays in this browser (`localStorage`). Each phone or computer has its own log until we add a shared backend.
+Data stays in this browser (`localStorage`).
 
 ## Run it
 

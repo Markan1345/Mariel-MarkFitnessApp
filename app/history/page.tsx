@@ -7,6 +7,7 @@ import { WorkoutCard } from "@/components/WorkoutCard";
 import { PERSON_IDS, PEOPLE } from "@/lib/people";
 import { groupWorkoutsByDay } from "@/lib/stats";
 import { useFitnessStore } from "@/lib/use-fitness-store";
+import { bodyWeightPounds } from "@/lib/weight";
 import type { PersonId } from "@/lib/types";
 
 export default function HistoryPage() {
@@ -58,6 +59,7 @@ export default function HistoryPage() {
                     key={workout.id}
                     workout={workout}
                     showPerson={filter === "both"}
+                    bodyWeightLb={bodyWeightPounds(state.weights, workout.personId)}
                     href={
                       workout.finishedAt
                         ? `/${workout.personId}/workout/${workout.id}`

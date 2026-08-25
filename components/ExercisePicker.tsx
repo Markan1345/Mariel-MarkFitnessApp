@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MUSCLE_GROUPS, searchExercises } from "@/lib/exercises";
-import type { MuscleGroup } from "@/lib/types";
+import type { ReactNode } from "react";
+import { MUSCLE_GROUPS, kindForExercise, searchExercises } from "@/lib/exercises";
+import type { ExerciseKind, MuscleGroup } from "@/lib/types";
 
 export function ExercisePicker({
   open,
@@ -11,7 +12,7 @@ export function ExercisePicker({
 }: {
   open: boolean;
   onClose: () => void;
-  onPick: (name: string) => void;
+  onPick: (name: string, kind: ExerciseKind) => void;
 }) {
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<MuscleGroup | "all">("all");
@@ -23,6 +24,12 @@ export function ExercisePicker({
   }, [query, group]);
 
   if (!open) return null;
+
+  function pick(name: string, kind?: ExerciseKind) {
+    const resolved = kind ?? (group === "cardio" ? "cardio" : kindForExercise(name));
+    onPick(name, resolved);
+    setQuery("");
+  }
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40 p-3 sm:items-center">
@@ -37,7 +44,7 @@ export function ExercisePicker({
           autoFocus
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search or type a custom name"
+          placeholder="Search lift, cardio, or type a custom name"
           className="mt-3 h-11 rounded-2xl border border-line bg-bg px-4"
         />
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -56,30 +63,33 @@ export function ExercisePicker({
         </div>
         <div className="mt-3 overflow-y-auto">
           {query.trim() && !results.some((item) => item.name.toLowerCase() === query.trim().toLowerCase()) ? (
-            <button
-              type="button"
-              className="mb-2 w-full rounded-2xl border border-dashed border-line px-4 py-3 text-left"
-              onClick={() => {
-                onPick(query.trim());
-                setQuery("");
-              }}
-            >
-              Use “{query.trim()}”
-            </button>
+            <div className="mb-2 grid gap-2">
+              <button
+                type="button"
+                className="w-full rounded-2xl border border-dashed border-line px-4 py-3 text-left"
+                onClick={() => pick(query.trim(), group === "cardio" ? "cardio" : "strength")}
+              >
+                Use “{query.trim()}” as a lift
+              </button>
+              <button
+                type="button"
+                className="w-full rounded-2xl border border-dashed border-line px-4 py-3 text-left"
+                onClick={() => pick(query.trim(), "cardio")}
+              >
+                Use “{query.trim()}” as cardio
+              </button>
+            </div>
           ) : null}
           {results.map((exercise) => (
             <button
               key={exercise.name}
               type="button"
               className="flex w-full items-center justify-between border-b border-line/70 px-1 py-3 text-left last:border-b-0"
-              onClick={() => {
-                onPick(exercise.name);
-                setQuery("");
-              }}
+              onClick={() => pick(exercise.name, exercise.kind)}
             >
               <span>{exercise.name}</span>
               <span className="text-xs tracking-wide text-muted uppercase">
-                {exercise.group.replace("-", " ")}
+                {exercise.kind === "cardio" ? "cardio" : exercise.group.replace("-", " ")}
               </span>
             </button>
           ))}
@@ -96,7 +106,7 @@ function FilterChip({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button

@@ -6,11 +6,14 @@ import { ExercisePicker } from "./ExercisePicker";
 import {
   addExercise,
   addSet,
+  cardioMinutes,
+  completedSetCount,
   removeExercise,
   removeSet,
   updateExercise,
   updateSet,
 } from "@/lib/store";
+import { DEFAULT_BODY_WEIGHT_LB, estimateWorkoutCalories, formatCalories } from "@/lib/calories";
 import { formatDuration } from "@/lib/stats";
 import type { Workout } from "@/lib/types";
 
@@ -20,12 +23,14 @@ export function WorkoutEditor({
   onFinish,
   onDelete,
   finishLabel = "Finish workout",
+  bodyWeightLb = DEFAULT_BODY_WEIGHT_LB,
 }: {
   workout: Workout;
   onChange: (workout: Workout) => void;
   onFinish?: () => void;
   onDelete?: () => void;
   finishLabel?: string;
+  bodyWeightLb?: number;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
@@ -42,6 +47,9 @@ export function WorkoutEditor({
     () => formatDuration(workout.startedAt, workout.finishedAt, now),
     [workout.startedAt, workout.finishedAt, now],
   );
+  const kcal = estimateWorkoutCalories(workout, bodyWeightLb);
+  const minutes = cardioMinutes(workout);
+  const sets = completedSetCount(workout);
 
   return (
     <>
@@ -50,7 +58,12 @@ export function WorkoutEditor({
         onChange={(event) => onChange({ ...workout, title: event.target.value })}
         className="font-display w-full bg-transparent text-4xl leading-none outline-none"
       />
-      <p className="mt-2 text-sm text-muted">{duration}</p>
+      <p className="mt-2 text-sm text-muted">
+        {duration}
+        {minutes > 0 ? ` · ${minutes} min cardio` : ""}
+        {sets.total > 0 ? ` · ${sets.done}/${sets.total} sets` : ""}
+        {` · est. ${formatCalories(kcal)}`}
+      </p>
       <textarea
         value={workout.notes}
         onChange={(event) => onChange({ ...workout, notes: event.target.value })}
@@ -64,6 +77,7 @@ export function WorkoutEditor({
           <ExerciseBlock
             key={exercise.id}
             exercise={exercise}
+            bodyWeightLb={bodyWeightLb}
             onChange={(next) => onChange(updateExercise(workout, exercise.id, () => next))}
             onAddSet={() => onChange(addSet(workout, exercise.id))}
             onRemove={() => onChange(removeExercise(workout, exercise.id))}
@@ -78,7 +92,7 @@ export function WorkoutEditor({
         onClick={() => setPickerOpen(true)}
         className="mt-4 w-full rounded-3xl border border-dashed border-line py-4 font-medium"
       >
-        Add exercise
+        Add lift or cardio
       </button>
 
       <div className="mt-6 grid gap-2">
@@ -123,8 +137,8 @@ export function WorkoutEditor({
       <ExercisePicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onPick={(name) => {
-          onChange(addExercise(workout, name));
+        onPick={(name, kind) => {
+          onChange(addExercise(workout, name, kind));
           setPickerOpen(false);
         }}
       />

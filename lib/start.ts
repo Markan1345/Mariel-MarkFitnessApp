@@ -1,9 +1,10 @@
 import { createWorkout, duplicateWorkout } from "@/lib/store";
-import type { PersonId, Workout, WorkoutTemplate } from "@/lib/types";
+import type { CustomPlan, PersonId, Workout, WorkoutTemplate } from "@/lib/types";
 
 export type StartChoice =
   | { type: "empty" }
   | { type: "template"; template: WorkoutTemplate }
+  | { type: "plan"; plan: CustomPlan }
   | { type: "repeat"; workout: Workout };
 
 export function workoutFromChoice(personId: PersonId, choice: StartChoice): Workout {
@@ -15,6 +16,13 @@ export function workoutFromChoice(personId: PersonId, choice: StartChoice): Work
       personId,
       title: choice.template.title,
       exerciseNames: choice.template.exercises,
+    });
+  }
+  if (choice.type === "plan") {
+    return createWorkout({
+      personId,
+      title: choice.plan.title,
+      planned: choice.plan.exercises,
     });
   }
   return createWorkout({ personId, title: "Workout" });

@@ -1,10 +1,14 @@
 "use client";
 
 import { SetRow } from "./SetRow";
+import { CardioBlock } from "./CardioBlock";
+import { estimateExerciseCalories, formatCalories } from "@/lib/calories";
+import { kindForExercise } from "@/lib/exercises";
 import type { ExerciseEntry, SetEntry } from "@/lib/types";
 
 export function ExerciseBlock({
   exercise,
+  bodyWeightLb,
   onChange,
   onAddSet,
   onRemove,
@@ -12,16 +16,33 @@ export function ExerciseBlock({
   onRemoveSet,
 }: {
   exercise: ExerciseEntry;
+  bodyWeightLb: number;
   onChange: (exercise: ExerciseEntry) => void;
   onAddSet: () => void;
   onRemove: () => void;
   onUpdateSet: (set: SetEntry) => void;
   onRemoveSet: (setId: string) => void;
 }) {
+  if ((exercise.kind ?? kindForExercise(exercise.name)) === "cardio") {
+    return (
+      <CardioBlock
+        exercise={exercise}
+        bodyWeightLb={bodyWeightLb}
+        onChange={onChange}
+        onRemove={onRemove}
+      />
+    );
+  }
+
+  const kcal = Math.round(estimateExerciseCalories(exercise, bodyWeightLb));
+
   return (
     <section className="rounded-3xl border border-line bg-paper p-4">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-display text-2xl leading-tight">{exercise.name}</h3>
+        <div>
+          <h3 className="font-display text-2xl leading-tight">{exercise.name}</h3>
+          {kcal > 0 ? <p className="mt-1 text-xs text-muted">Est. {formatCalories(kcal)}</p> : null}
+        </div>
         <button type="button" onClick={onRemove} className="text-xs text-muted">
           Remove
         </button>

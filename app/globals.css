@@ -11,6 +11,8 @@
   --mariel: #b24a34;
   --mariel-soft: #f3ddd6;
   --gold: #c47a2c;
+  --accent: var(--mark);
+  --accent-soft: var(--mark-soft);
 }
 
 @theme inline {

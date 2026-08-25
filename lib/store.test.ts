@@ -19,7 +19,7 @@ describe("store", () => {
   it("parses empty or invalid storage as a blank state", () => {
     expect(parseState(null)).toEqual(emptyState());
     expect(parseState("not-json")).toEqual(emptyState());
-    expect(parseState(JSON.stringify({ version: 2 }))).toEqual(emptyState());
+    expect(parseState(JSON.stringify({ version: 9 }))).toEqual(emptyState());
   });
 
   it("creates a workout from a template and tracks completed sets", () => {
@@ -106,6 +106,21 @@ describe("store", () => {
         workouts: [{ ...mark, pairId: undefined }],
       }),
     );
+    expect(parsed.version).toBe(2);
+    expect(parsed.plans).toEqual([]);
+    expect(parsed.weights).toEqual([]);
     expect(parsed.workouts[0].pairId).toBeNull();
+    expect(parsed.workouts[0].exercises[0].kind).toBe("strength");
+  });
+
+  it("creates cardio entries without lifting sets", () => {
+    const workout = createWorkout({
+      personId: "mariel",
+      title: "Cardio",
+      exerciseNames: ["Treadmill"],
+    });
+    expect(workout.exercises[0].kind).toBe("cardio");
+    expect(workout.exercises[0].sets).toEqual([]);
+    expect(workout.exercises[0].cardio?.minutes).toBe(20);
   });
 });

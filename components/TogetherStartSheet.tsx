@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
 import { PEOPLE, PERSON_IDS } from "@/lib/people";
+import { isWeekday, planForWeekday, plansForPerson } from "@/lib/programs";
 import type { StartChoice } from "@/lib/start";
-import type { PersonId, Workout } from "@/lib/types";
+import type { CustomPlan, PersonId, Workout } from "@/lib/types";
+import { WEEKDAYS } from "@/lib/weekdays";
 
 export type { StartChoice };
 
@@ -17,15 +19,18 @@ export function TogetherStartSheet({
   open,
   onClose,
   lastWorkouts,
+  plans,
   onStart,
 }: {
   open: boolean;
   onClose: () => void;
   lastWorkouts: Partial<Record<PersonId, Workout>>;
+  plans: CustomPlan[];
   onStart: (choices: Record<PersonId, StartChoice>) => void;
 }) {
   const [choices, setChoices] = useState<Record<PersonId, StartChoice>>(EMPTY_CHOICES);
   const now = new Date();
+  const today = now.getDay();
 
   if (!open) return null;
 
@@ -44,7 +49,7 @@ export function TogetherStartSheet({
             month: "long",
             day: "numeric",
           })}
-          . Pick a different session for each of you.
+          . Use today&apos;s custom plan, a saved day, or a template.
         </p>
         <div className="mt-4 overflow-y-auto pr-1">
           {PERSON_IDS.map((id) => (
@@ -52,6 +57,8 @@ export function TogetherStartSheet({
               key={id}
               personId={id}
               last={lastWorkouts[id]}
+              plans={plansForPerson(plans, id)}
+              todayPlan={isWeekday(today) ? planForWeekday(plans, id, today) : undefined}
               value={choices[id]}
               onChange={(choice) => setChoices((current) => ({ ...current, [id]: choice }))}
             />
@@ -72,17 +79,28 @@ export function TogetherStartSheet({
 function PersonChoices({
   personId,
   last,
+  plans,
+  todayPlan,
   value,
   onChange,
 }: {
   personId: PersonId;
   last?: Workout;
+  plans: CustomPlan[];
+  todayPlan?: CustomPlan;
   value: StartChoice;
   onChange: (choice: StartChoice) => void;
 }) {
   const person = PEOPLE[personId];
   const selectedId =
-    value.type === "template" ? value.template.id : value.type === "repeat" ? "repeat" : "empty";
+    value.type === "template"
+      ? value.template.id
+      : value.type === "plan"
+        ? `plan:${value.plan.id}`
+        : value.type === "repeat"
+          ? "repeat"
+          : "empty";
+  const extras = plans.filter((plan) => plan.id !== todayPlan?.id).slice(0, 4);
 
   return (
     <section className={`person-${personId} mb-5`}>
@@ -93,10 +111,18 @@ function PersonChoices({
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2">
+        {todayPlan ? (
+          <ChoiceButton
+            selected={selectedId === `plan:${todayPlan.id}`}
+            title={`Today · ${todayPlan.title}`}
+            subtitle={`${WEEKDAYS[todayPlan.weekday ?? 0]?.short ?? "Day"} · ${todayPlan.exercises.length} moves`}
+            onClick={() => onChange({ type: "plan", plan: todayPlan })}
+          />
+        ) : null}
         <ChoiceButton
           selected={selectedId === "empty"}
           title="Empty"
-          subtitle="Add exercises as you go"
+          subtitle="Build it as you go"
           onClick={() => onChange({ type: "empty" })}
         />
         {last ? (
@@ -107,6 +133,15 @@ function PersonChoices({
             onClick={() => onChange({ type: "repeat", workout: last })}
           />
         ) : null}
+        {extras.map((plan) => (
+          <ChoiceButton
+            key={plan.id}
+            selected={selectedId === `plan:${plan.id}`}
+            title={plan.title}
+            subtitle={plan.weekday !== null ? WEEKDAYS[plan.weekday].short : "Custom"}
+            onClick={() => onChange({ type: "plan", plan })}
+          />
+        ))}
         {WORKOUT_TEMPLATES.map((template) => (
           <ChoiceButton
             key={template.id}

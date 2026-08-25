@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { completedSetCount } from "@/lib/store";
+import { cardioMinutes, completedSetCount } from "@/lib/store";
+import { DEFAULT_BODY_WEIGHT_LB, estimateWorkoutCalories, formatCalories } from "@/lib/calories";
 import { formatDateLabel, formatDuration, formatTimeLabel } from "@/lib/stats";
 import { PEOPLE } from "@/lib/people";
 import type { Workout } from "@/lib/types";
@@ -8,12 +9,16 @@ export function WorkoutCard({
   workout,
   href,
   showPerson = false,
+  bodyWeightLb = DEFAULT_BODY_WEIGHT_LB,
 }: {
   workout: Workout;
   href?: string;
   showPerson?: boolean;
+  bodyWeightLb?: number;
 }) {
   const { done, total } = completedSetCount(workout);
+  const minutes = cardioMinutes(workout);
+  const kcal = estimateWorkoutCalories(workout, bodyWeightLb);
   const live = !workout.finishedAt;
   const person = PEOPLE[workout.personId];
   const destination = href ?? `/${workout.personId}/workout/${workout.id}`;
@@ -40,10 +45,12 @@ export function WorkoutCard({
       </div>
       <div className="mt-3 flex items-center justify-between text-sm text-muted">
         <span>
-          {workout.exercises.length} exercise{workout.exercises.length === 1 ? "" : "s"}
+          {workout.exercises.length} move{workout.exercises.length === 1 ? "" : "s"}
+          {minutes > 0 ? ` · ${minutes} min cardio` : ""}
         </span>
         <span>
-          {done}/{total} sets · {formatDuration(workout.startedAt, workout.finishedAt)}
+          {total > 0 ? `${done}/${total} sets · ` : ""}
+          {formatDuration(workout.startedAt, workout.finishedAt)} · {formatCalories(kcal)}
         </span>
       </div>
     </Link>

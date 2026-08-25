@@ -34,7 +34,7 @@ export function NumberStepper({
           onChange(next === "" ? null : Number(next));
         }}
       />
-      {suffix ? <span className="w-6 text-xs text-muted">{suffix}</span> : null}
+      {suffix ? <span className="min-w-6 px-0.5 text-xs text-muted">{suffix}</span> : null}
       <button
         type="button"
         className="grid h-9 w-9 place-items-center rounded-full bg-line/80 text-lg leading-none"

@@ -21,6 +21,10 @@ export function writeState(state: AppState) {
   emitChange();
 }
 
+export function patchState(updater: (state: AppState) => AppState) {
+  writeState(updater(readState()));
+}
+
 export function saveWorkout(workout: Workout) {
   writeState(upsertWorkout(readState(), workout));
 }

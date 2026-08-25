@@ -3,7 +3,14 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { AppState, Workout } from "@/lib/types";
 import { emptyState } from "@/lib/store";
-import { readState, removeWorkout, saveWorkout, saveWorkouts, subscribeToStore } from "@/lib/client-store";
+import {
+  patchState,
+  readState,
+  removeWorkout,
+  saveWorkout,
+  saveWorkouts,
+  subscribeToStore,
+} from "@/lib/client-store";
 
 function getSnapshot() {
   return JSON.stringify(readState());
@@ -29,5 +36,9 @@ export function useFitnessStore() {
     removeWorkout(id);
   }, []);
 
-  return { state, upsert, upsertMany, remove };
+  const patch = useCallback((updater: (current: AppState) => AppState) => {
+    patchState(updater);
+  }, []);
+
+  return { state, upsert, upsertMany, remove, patch };
 }

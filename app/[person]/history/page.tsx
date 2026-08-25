@@ -7,6 +7,7 @@ import { WorkoutCard } from "@/components/WorkoutCard";
 import { isPersonId } from "@/lib/people";
 import { workoutsForPerson } from "@/lib/store";
 import { useFitnessStore } from "@/lib/use-fitness-store";
+import { bodyWeightPounds } from "@/lib/weight";
 
 export default function PersonHistoryPage({
   params,
@@ -33,7 +34,11 @@ export default function PersonHistoryPage({
         ) : (
           <div className="grid gap-3">
             {workouts.map((workout) => (
-              <WorkoutCard key={workout.id} workout={workout} />
+              <WorkoutCard
+                key={workout.id}
+                workout={workout}
+                bodyWeightLb={bodyWeightPounds(state.weights, personId)}
+              />
             ))}
           </div>
         )}

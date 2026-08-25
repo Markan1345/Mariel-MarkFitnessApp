@@ -1,4 +1,4 @@
-import type { ExerciseTemplate, MuscleGroup, WorkoutTemplate } from "./types";
+import type { ExerciseKind, ExerciseTemplate, MuscleGroup, WorkoutTemplate } from "./types";
 
 export const MUSCLE_GROUPS: { id: MuscleGroup; label: string }[] = [
   { id: "chest", label: "Chest" },
@@ -11,7 +11,7 @@ export const MUSCLE_GROUPS: { id: MuscleGroup; label: string }[] = [
   { id: "full-body", label: "Full body" },
 ];
 
-export const EXERCISE_LIBRARY: ExerciseTemplate[] = [
+const LIFTS: { name: string; group: Exclude<MuscleGroup, "cardio"> }[] = [
   { name: "Barbell bench press", group: "chest" },
   { name: "Incline dumbbell press", group: "chest" },
   { name: "Dumbbell fly", group: "chest" },
@@ -35,6 +35,7 @@ export const EXERCISE_LIBRARY: ExerciseTemplate[] = [
   { name: "Bulgarian split squat", group: "legs" },
   { name: "Calf raise", group: "legs" },
   { name: "Hip thrust", group: "legs" },
+  { name: "Goblet squat", group: "legs" },
   { name: "Overhead press", group: "shoulders" },
   { name: "Dumbbell shoulder press", group: "shoulders" },
   { name: "Lateral raise", group: "shoulders" },
@@ -50,14 +51,30 @@ export const EXERCISE_LIBRARY: ExerciseTemplate[] = [
   { name: "Cable crunch", group: "core" },
   { name: "Ab wheel", group: "core" },
   { name: "Russian twist", group: "core" },
-  { name: "Treadmill", group: "cardio" },
-  { name: "Stationary bike", group: "cardio" },
-  { name: "Rowing machine", group: "cardio" },
-  { name: "Elliptical", group: "cardio" },
-  { name: "Jump rope", group: "cardio" },
   { name: "Farmer carry", group: "full-body" },
   { name: "Kettlebell swing", group: "full-body" },
   { name: "Burpee", group: "full-body" },
+];
+
+const CARDIO: string[] = [
+  "Walking",
+  "Jogging",
+  "Running",
+  "Treadmill",
+  "Stationary bike",
+  "Outdoor cycling",
+  "Rowing machine",
+  "Elliptical",
+  "Jump rope",
+  "Stair climber",
+  "Swimming",
+  "HIIT",
+  "Hiking",
+];
+
+export const EXERCISE_LIBRARY: ExerciseTemplate[] = [
+  ...LIFTS.map((item) => ({ ...item, kind: "strength" as const })),
+  ...CARDIO.map((name) => ({ name, group: "cardio" as const, kind: "cardio" as const })),
 ];
 
 export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
@@ -77,25 +94,13 @@ export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
     id: "pull",
     title: "Pull day",
     group: "back",
-    exercises: [
-      "Deadlift",
-      "Pull-up",
-      "Barbell row",
-      "Face pull",
-      "Barbell curl",
-    ],
+    exercises: ["Deadlift", "Pull-up", "Barbell row", "Face pull", "Barbell curl"],
   },
   {
     id: "legs",
     title: "Leg day",
     group: "legs",
-    exercises: [
-      "Back squat",
-      "Romanian deadlift",
-      "Walking lunge",
-      "Leg curl",
-      "Calf raise",
-    ],
+    exercises: ["Back squat", "Romanian deadlift", "Walking lunge", "Leg curl", "Calf raise"],
   },
   {
     id: "upper",
@@ -113,13 +118,7 @@ export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
     id: "full",
     title: "Full body",
     group: "full-body",
-    exercises: [
-      "Back squat",
-      "Barbell bench press",
-      "Barbell row",
-      "Overhead press",
-      "Plank",
-    ],
+    exercises: ["Back squat", "Barbell bench press", "Barbell row", "Overhead press", "Plank"],
   },
   {
     id: "cardio",
@@ -127,12 +126,30 @@ export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
     group: "cardio",
     exercises: ["Treadmill", "Rowing machine"],
   },
+  {
+    id: "five-a",
+    title: "5x5 A",
+    group: "full-body",
+    exercises: ["Back squat", "Barbell bench press", "Barbell row"],
+  },
+  {
+    id: "five-b",
+    title: "5x5 B",
+    group: "full-body",
+    exercises: ["Back squat", "Overhead press", "Deadlift"],
+  },
 ];
+
+const CARDIO_HINT = /walk|jog|run|treadmill|bike|cycl|row|elliptical|jump rope|stair|swim|hiit|hike|cardio/;
+
+export function kindForExercise(name: string): ExerciseKind {
+  const found = EXERCISE_LIBRARY.find((item) => item.name.toLowerCase() === name.trim().toLowerCase());
+  if (found) return found.kind;
+  return CARDIO_HINT.test(name.toLowerCase()) ? "cardio" : "strength";
+}
 
 export function searchExercises(query: string): ExerciseTemplate[] {
   const q = query.trim().toLowerCase();
   if (!q) return EXERCISE_LIBRARY;
-  return EXERCISE_LIBRARY.filter((exercise) =>
-    exercise.name.toLowerCase().includes(q),
-  );
+  return EXERCISE_LIBRARY.filter((exercise) => exercise.name.toLowerCase().includes(q));
 }
