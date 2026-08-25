@@ -1,12 +1,12 @@
 {
-  "name": "Mark & Mariel Fitness",
-  "short_name": "Mark & Mariel",
+  "name": "Lifting Together",
+  "short_name": "LT",
   "description": "Log workouts, cardio, calories, and body weight together.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "background_color": "#efe6d8",
-  "theme_color": "#efe6d8",
+  "background_color": "#fff2d9",
+  "theme_color": "#fff2d9",
   "icons": [
     {
       "src": "icon.svg",

@@ -14,13 +14,13 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Mark & Mariel",
+  title: "Lifting Together",
   description: "A shared workout tracker for the two of you. Log lifts, cardio, calories, and body weight on your phone.",
-  applicationName: "Mark & Mariel",
+  applicationName: "Lifting Together",
   manifest: `${SITE_BASE_PATH}/manifest.webmanifest`,
   appleWebApp: {
     capable: true,
-    title: "Mark & Mariel",
+    title: "Lifting Together",
     statusBarStyle: "default",
   },
   formatDetection: {
@@ -36,7 +36,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#efe6d8",
+  themeColor: "#fff2d9",
 };
 
 export default function RootLayout({

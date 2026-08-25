@@ -50,12 +50,14 @@ export default function TogetherHome() {
       <header className="px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-4">
         <div className="flex items-start justify-between">
           <div>
-            <p className="eyebrow">Train together</p>
+            <p className="eyebrow">Lifting Together</p>
             <h1 className="font-display mt-1 text-[2.65rem] leading-none">Ready to move?</h1>
             <p className="mt-2 text-sm font-medium text-muted">Mark &amp; Mariel&apos;s training hub</p>
           </div>
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-sun text-ink shadow-[0_8px_18px_rgba(231,138,52,0.25)]">
-            <AppIcon name="activity" className="h-6 w-6" />
+          <div className="relative grid h-12 w-12 place-items-center overflow-hidden rounded-2xl bg-ink text-lg font-black tracking-[-0.08em] text-paper shadow-[0_8px_18px_rgba(39,27,18,0.2)]">
+            LT
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-sun" />
+            <span className="absolute right-2 bottom-1.5 left-2 h-0.5 rounded-full bg-energy" />
           </div>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2">
