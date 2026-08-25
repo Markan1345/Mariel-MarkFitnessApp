@@ -67,3 +67,33 @@ export function greeting(name: string, now = new Date()): string {
 export function personWorkouts(workouts: Workout[], personId: PersonId): Workout[] {
   return workouts.filter((workout) => workout.personId === personId);
 }
+
+export function localDayKey(iso: string): string {
+  const date = startOfLocalDay(new Date(iso));
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+const PERSON_ORDER: Record<PersonId, number> = { mark: 0, mariel: 1 };
+
+export function groupWorkoutsByDay(
+  workouts: Workout[],
+): { key: string; date: Date; workouts: Workout[] }[] {
+  const groups = new Map<string, Workout[]>();
+  for (const workout of workouts) {
+    const key = localDayKey(workout.startedAt);
+    const list = groups.get(key) ?? [];
+    list.push(workout);
+    groups.set(key, list);
+  }
+  return [...groups.entries()]
+    .map(([key, items]) => ({
+      key,
+      date: startOfLocalDay(new Date(items[0].startedAt)),
+      workouts: [...items].sort((a, b) => {
+        const byPerson = PERSON_ORDER[a.personId] - PERSON_ORDER[b.personId];
+        if (byPerson !== 0) return byPerson;
+        return b.startedAt.localeCompare(a.startedAt);
+      }),
+    }))
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+}

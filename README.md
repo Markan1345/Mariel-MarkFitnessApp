@@ -1,18 +1,14 @@
 # Mark & Mariel Fitness
 
-A shared workout tracker for two people. This first version is the workout log: pick who is training, start a session, record sets, and look back at history.
-
-Weight tracking can land in a later pass.
+A shared workout tracker for two people. Log both sessions at the same time: different exercises, reps, and weights, on the same screen.
 
 ## What you can do
 
-- Switch between **Mark** and **Mariel**
-- Start a blank workout or use a template (push, pull, legs, upper, full body, cardio)
-- Add exercises from a built-in list or type a custom name
-- Log weight, reps, and completed sets
-- Resume an unfinished session
-- Repeat the last workout
-- Browse history and reopen or delete a session
+- Start both workouts together, with a different template for each person
+- Flip between **Mark** and **Mariel** while a session is live
+- Log each person's exercises, weight, and reps independently
+- Finish one person and keep going with the other, or finish both
+- Browse a combined history, or filter to one person
 
 Data stays in this browser (`localStorage`). Each phone or computer has its own log until we add a shared backend.
 
@@ -27,5 +23,6 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
 npm test
+npm run lint
 npm run build
 ```

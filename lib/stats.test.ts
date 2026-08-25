@@ -3,6 +3,7 @@ import { searchExercises, WORKOUT_TEMPLATES } from "@/lib/exercises";
 import {
   formatDuration,
   greeting,
+  groupWorkoutsByDay,
   lastSevenDays,
   startOfLocalDay,
   workoutsThisWeek,
@@ -46,6 +47,29 @@ describe("stats", () => {
     expect(days).toHaveLength(7);
     expect(days[0].date.getTime()).toBe(startOfLocalDay(new Date("2026-08-19T12:00:00")).getTime());
     expect(days.some((day) => day.trained)).toBe(true);
+  });
+
+  it("groups both people's workouts on the same local day", () => {
+    const mark = createWorkout({
+      personId: "mark",
+      title: "Push",
+      startedAt: "2026-08-25T11:00:00.000Z",
+    });
+    const mariel = createWorkout({
+      personId: "mariel",
+      title: "Legs",
+      startedAt: "2026-08-25T12:00:00.000Z",
+    });
+    const earlier = createWorkout({
+      personId: "mark",
+      title: "Old",
+      startedAt: "2026-08-24T12:00:00.000Z",
+    });
+    const groups = groupWorkoutsByDay([mariel, earlier, mark]);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].workouts.map((workout) => workout.personId)).toEqual(["mark", "mariel"]);
+    expect(groups[0].workouts.map((workout) => workout.title)).toEqual(["Push", "Legs"]);
+    expect(groups[1].workouts[0].title).toBe("Old");
   });
 });
 

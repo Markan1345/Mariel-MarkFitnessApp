@@ -2,13 +2,13 @@
 
 import { use } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { BottomNav } from "@/components/BottomNav";
+import { AppNav } from "@/components/AppNav";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { isPersonId } from "@/lib/people";
 import { workoutsForPerson } from "@/lib/store";
 import { useFitnessStore } from "@/lib/use-fitness-store";
 
-export default function HistoryPage({
+export default function PersonHistoryPage({
   params,
 }: {
   params: Promise<{ person: string }>;
@@ -33,12 +33,12 @@ export default function HistoryPage({
         ) : (
           <div className="grid gap-3">
             {workouts.map((workout) => (
-              <WorkoutCard key={workout.id} personId={personId} workout={workout} />
+              <WorkoutCard key={workout.id} workout={workout} />
             ))}
           </div>
         )}
       </main>
-      <BottomNav personId={personId} />
+      <AppNav />
     </div>
   );
 }

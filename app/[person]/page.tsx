@@ -4,12 +4,12 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
-import { BottomNav } from "@/components/BottomNav";
+import { AppNav } from "@/components/AppNav";
 import { StartWorkoutSheet } from "@/components/StartWorkoutSheet";
 import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { isPersonId, PEOPLE } from "@/lib/people";
-import { activeWorkoutForPerson, createWorkout, duplicateWorkout, workoutsForPerson } from "@/lib/store";
+import { activeWorkoutForPerson, createWorkout, duplicateWorkout, linkWorkouts, workoutsForPerson } from "@/lib/store";
 import { greeting, workoutsThisWeek } from "@/lib/stats";
 import { useFitnessStore } from "@/lib/use-fitness-store";
 import type { WorkoutTemplate } from "@/lib/types";
@@ -21,7 +21,7 @@ export default function PersonHome({
 }) {
   const { person } = use(params);
   const router = useRouter();
-  const { state, upsert } = useFitnessStore();
+  const { state, upsert, upsertMany } = useFitnessStore();
   const [sheetOpen, setSheetOpen] = useState(false);
   if (!isPersonId(person)) return null;
   const personId = person;
@@ -31,22 +31,28 @@ export default function PersonHome({
   const week = workoutsThisWeek(personWorkouts);
   const lastFinished = recent[0];
 
+  function saveNew(workout: ReturnType<typeof createWorkout>) {
+    const otherId = personId === "mark" ? "mariel" : "mark";
+    const other = activeWorkoutForPerson(state, otherId);
+    if (other) upsertMany(linkWorkouts(workout, other));
+    else upsert(workout);
+  }
+
   function startSession(template?: WorkoutTemplate) {
     const workout = createWorkout({
       personId,
       title: template?.title ?? "Workout",
       exerciseNames: template?.exercises,
     });
-    upsert(workout);
+    saveNew(workout);
     setSheetOpen(false);
-    router.push(`/${personId}/workout/${workout.id}`);
+    router.push(`/session?person=${personId}`);
   }
 
   function repeatLast() {
     if (!lastFinished) return;
-    const next = duplicateWorkout(lastFinished);
-    upsert(next);
-    router.push(`/${personId}/workout/${next.id}`);
+    saveNew(duplicateWorkout(lastFinished));
+    router.push(`/session?person=${personId}`);
   }
 
   return (
@@ -71,7 +77,7 @@ export default function PersonHome({
         {active ? (
           <button
             type="button"
-            onClick={() => router.push(`/${personId}/workout/${active.id}`)}
+            onClick={() => router.push(`/session?person=${personId}`)}
             className="accent-bg mt-4 w-full rounded-3xl px-4 py-4 text-left text-paper"
           >
             <p className="text-xs tracking-[0.18em] uppercase opacity-80">In progress</p>
@@ -102,7 +108,7 @@ export default function PersonHome({
         <section className="mt-8">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-display text-2xl">Recent</h3>
-            <Link href={`/${personId}/history`} className="text-sm text-muted">
+            <Link href="/history" className="text-sm text-muted">
               See all
             </Link>
           </div>
@@ -116,13 +122,13 @@ export default function PersonHome({
           ) : (
             <div className="grid gap-3">
               {recent.map((workout) => (
-                <WorkoutCard key={workout.id} personId={personId} workout={workout} />
+                <WorkoutCard key={workout.id} workout={workout} />
               ))}
             </div>
           )}
         </section>
       </main>
-      <BottomNav personId={personId} />
+      <AppNav />
       <StartWorkoutSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}

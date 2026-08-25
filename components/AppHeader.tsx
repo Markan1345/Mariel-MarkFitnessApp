@@ -23,7 +23,7 @@ export function AppHeader({
         </Link>
       ) : (
         <Link href="/" className="text-sm font-medium text-muted">
-          Switch
+          Together
         </Link>
       )}
       <div className="text-center">

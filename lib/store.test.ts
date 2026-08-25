@@ -4,10 +4,12 @@ import {
   addSet,
   completedSetCount,
   createWorkout,
+  createPairedWorkouts,
   deleteWorkout,
   duplicateWorkout,
   emptyState,
   finishWorkout,
+  linkWorkouts,
   parseState,
   updateSet,
   upsertWorkout,
@@ -78,5 +80,32 @@ describe("store", () => {
 
     state = deleteWorkout(upsertWorkout(state, copy), copy.id);
     expect(state.workouts.map((workout) => workout.id)).toEqual([original.id]);
+  });
+
+  it("pairs two independent workouts so they can be logged together", () => {
+    const { mark, mariel } = createPairedWorkouts({
+      mark: { title: "Push day", exerciseNames: ["Barbell bench press"] },
+      mariel: { title: "Leg day", exerciseNames: ["Back squat"] },
+    });
+    expect(mark.pairId).toBeTruthy();
+    expect(mark.pairId).toBe(mariel.pairId);
+    expect(mark.title).toBe("Push day");
+    expect(mariel.title).toBe("Leg day");
+    expect(mark.exercises[0].name).toBe("Barbell bench press");
+    expect(mariel.exercises[0].name).toBe("Back squat");
+
+    const [linkedA, linkedB] = linkWorkouts(
+      createWorkout({ personId: "mark", title: "Cardio" }),
+      createWorkout({ personId: "mariel", title: "Core" }),
+    );
+    expect(linkedA.pairId).toBe(linkedB.pairId);
+
+    const parsed = parseState(
+      JSON.stringify({
+        version: 1,
+        workouts: [{ ...mark, pairId: undefined }],
+      }),
+    );
+    expect(parsed.workouts[0].pairId).toBeNull();
   });
 });

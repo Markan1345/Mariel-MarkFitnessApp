@@ -1,6 +1,6 @@
 "use client";
 
-import { parseState, STORAGE_KEY, emptyState, upsertWorkout, deleteWorkout } from "./store";
+import { parseState, STORAGE_KEY, emptyState, upsertWorkout, upsertWorkouts, deleteWorkout } from "./store";
 import type { AppState, Workout } from "./types";
 
 const CHANGE_EVENT = "mm-fitness-change";
@@ -23,6 +23,10 @@ export function writeState(state: AppState) {
 
 export function saveWorkout(workout: Workout) {
   writeState(upsertWorkout(readState(), workout));
+}
+
+export function saveWorkouts(workouts: Workout[]) {
+  writeState(upsertWorkouts(readState(), workouts));
 }
 
 export function removeWorkout(id: string) {

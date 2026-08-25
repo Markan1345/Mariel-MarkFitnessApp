@@ -32,6 +32,7 @@ export interface Workout {
   finishedAt: string | null;
   notes: string;
   exercises: ExerciseEntry[];
+  pairId: string | null;
 }
 
 export interface AppState {

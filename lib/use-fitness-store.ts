@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { AppState, Workout } from "@/lib/types";
 import { emptyState } from "@/lib/store";
-import { readState, removeWorkout, saveWorkout, subscribeToStore } from "@/lib/client-store";
+import { readState, removeWorkout, saveWorkout, saveWorkouts, subscribeToStore } from "@/lib/client-store";
 
 function getSnapshot() {
   return JSON.stringify(readState());
@@ -21,9 +21,13 @@ export function useFitnessStore() {
     saveWorkout(workout);
   }, []);
 
+  const upsertMany = useCallback((workouts: Workout[]) => {
+    saveWorkouts(workouts);
+  }, []);
+
   const remove = useCallback((id: string) => {
     removeWorkout(id);
   }, []);
 
-  return { state, upsert, remove };
+  return { state, upsert, upsertMany, remove };
 }

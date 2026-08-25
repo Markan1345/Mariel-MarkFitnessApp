@@ -13,11 +13,17 @@ export function isAppState(value: unknown): value is AppState {
   return candidate.version === 1 && Array.isArray(candidate.workouts);
 }
 
+function normalizeWorkout(workout: Workout): Workout {
+  return { ...workout, pairId: workout.pairId ?? null };
+}
+
 export function parseState(raw: string | null): AppState {
   if (!raw) return emptyState();
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (isAppState(parsed)) return parsed;
+    if (isAppState(parsed)) {
+      return { ...parsed, workouts: parsed.workouts.map(normalizeWorkout) };
+    }
   } catch {
     return emptyState();
   }
@@ -81,6 +87,7 @@ export function createWorkout(input: {
   title: string;
   exerciseNames?: string[];
   startedAt?: string;
+  pairId?: string | null;
 }): Workout {
   const exercises = (input.exerciseNames ?? []).map((name) => createExercise(name));
   return {
@@ -91,7 +98,33 @@ export function createWorkout(input: {
     finishedAt: null,
     notes: "",
     exercises,
+    pairId: input.pairId ?? null,
   };
+}
+
+export function createPairedWorkouts(input: {
+  mark: { title: string; exerciseNames?: string[] };
+  mariel: { title: string; exerciseNames?: string[] };
+  startedAt?: string;
+}): { mark: Workout; mariel: Workout } {
+  const pairId = createId("pair");
+  const startedAt = input.startedAt ?? new Date().toISOString();
+  return {
+    mark: createWorkout({ personId: "mark", ...input.mark, pairId, startedAt }),
+    mariel: createWorkout({ personId: "mariel", ...input.mariel, pairId, startedAt }),
+  };
+}
+
+export function linkWorkouts(first: Workout, second: Workout): [Workout, Workout] {
+  const pairId = first.pairId ?? second.pairId ?? createId("pair");
+  return [
+    { ...first, pairId },
+    { ...second, pairId },
+  ];
+}
+
+export function upsertWorkouts(state: AppState, workouts: Workout[]): AppState {
+  return workouts.reduce((next, workout) => upsertWorkout(next, workout), state);
 }
 
 export function addExercise(workout: Workout, name: string): Workout {
@@ -176,6 +209,7 @@ export function duplicateWorkout(
     id: createId("wo"),
     startedAt,
     finishedAt: null,
+    pairId: null,
     exercises: workout.exercises.map((exercise) => ({
       ...exercise,
       id: createId("ex"),
