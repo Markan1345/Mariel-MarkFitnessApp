@@ -3,6 +3,7 @@ import { cardioMinutes, completedSetCount } from "@/lib/store";
 import { DEFAULT_BODY_WEIGHT_LB, estimateWorkoutCalories, formatCalories } from "@/lib/calories";
 import { formatDateLabel, formatDuration, formatTimeLabel } from "@/lib/stats";
 import { PEOPLE } from "@/lib/people";
+import { workoutHref } from "@/lib/routes";
 import type { Workout } from "@/lib/types";
 
 export function WorkoutCard({
@@ -21,7 +22,7 @@ export function WorkoutCard({
   const kcal = estimateWorkoutCalories(workout, bodyWeightLb);
   const live = !workout.finishedAt;
   const person = PEOPLE[workout.personId];
-  const destination = href ?? `/${workout.personId}/workout/${workout.id}`;
+  const destination = href ?? workoutHref(workout.personId, workout.id);
 
   return (
     <Link href={destination} className={`person-${workout.personId} block rounded-3xl border border-line bg-paper p-4`}>

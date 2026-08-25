@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
-import { isPersonId } from "@/lib/people";
+import { PERSON_IDS, isPersonId } from "@/lib/people";
+
+export function generateStaticParams() {
+  return PERSON_IDS.map((person) => ({ person }));
+}
 
 export default async function PersonLayout({
   children,

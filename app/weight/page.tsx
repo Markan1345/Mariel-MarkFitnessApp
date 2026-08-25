@@ -41,7 +41,7 @@ export default function WeightPage() {
 
   return (
     <div className={`person-${personId} flex min-h-svh flex-col`}>
-      <header className="px-5 pt-8 pb-3">
+      <header className="px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-3">
         <p className="text-sm tracking-[0.22em] text-muted uppercase">US / lb</p>
         <h1 className="font-display mt-2 text-4xl leading-none">Body weight</h1>
         <p className="mt-3 text-sm text-muted">

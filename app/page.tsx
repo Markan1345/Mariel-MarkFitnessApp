@@ -15,6 +15,7 @@ import {
 } from "@/lib/store";
 import { isWeekday, planForWeekday } from "@/lib/programs";
 import { workoutFromChoice } from "@/lib/start";
+import { workoutHref } from "@/lib/routes";
 import { groupWorkoutsByDay, workoutsThisWeek } from "@/lib/stats";
 import { useFitnessStore } from "@/lib/use-fitness-store";
 import { bodyWeightPounds, latestWeight } from "@/lib/weight";
@@ -45,7 +46,7 @@ export default function TogetherHome() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="px-5 pt-8 pb-3">
+      <header className="px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-3">
         <p className="text-sm tracking-[0.22em] text-muted uppercase">Together</p>
         <h1 className="font-display mt-2 text-4xl leading-none">Mark &amp; Mariel</h1>
         <p className="mt-3 max-w-[34ch] text-sm leading-relaxed text-muted">
@@ -160,7 +161,7 @@ export default function TogetherHome() {
                       bodyWeightLb={bodyWeightPounds(state.weights, workout.personId)}
                       href={
                         workout.finishedAt
-                          ? `/${workout.personId}/workout/${workout.id}`
+                          ? workoutHref(workout.personId, workout.id)
                           : `/session?person=${workout.personId}`
                       }
                     />

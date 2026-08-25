@@ -1,7 +1,7 @@
 "use client";
 
-import { use } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, use } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { WorkoutEditor } from "@/components/WorkoutEditor";
 import { isPersonId } from "@/lib/people";
@@ -12,13 +12,27 @@ import { bodyWeightPounds } from "@/lib/weight";
 export default function WorkoutPage({
   params,
 }: {
-  params: Promise<{ person: string; id: string }>;
+  params: Promise<{ person: string }>;
 }) {
-  const { person, id } = use(params);
+  return (
+    <Suspense fallback={<div className="min-h-svh px-5 py-10 text-sm text-muted">Opening workout…</div>}>
+      <WorkoutPageInner params={params} />
+    </Suspense>
+  );
+}
+
+function WorkoutPageInner({
+  params,
+}: {
+  params: Promise<{ person: string }>;
+}) {
+  const { person } = use(params);
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") ?? "";
   const router = useRouter();
   const { state, upsert, remove } = useFitnessStore();
   const personId = isPersonId(person) ? person : null;
-  const workout = personId ? getWorkout(state, id) : undefined;
+  const workout = personId && id ? getWorkout(state, id) : undefined;
 
   if (!personId) return null;
 

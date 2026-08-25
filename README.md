@@ -1,6 +1,10 @@
 # Mark & Mariel Fitness
 
-A shared workout tracker for two people. Log both sessions at the same time, including custom days, imported lifting programs, cardio, estimated calories, and body weight in pounds.
+A shared mobile website for two people. Log both sessions at the same time, including custom days, imported lifting programs, cardio, estimated calories, and body weight in pounds.
+
+**Live site:** [https://markan1345.github.io/Mariel-MarkFitnessApp/](https://markan1345.github.io/Mariel-MarkFitnessApp/)
+
+Open that link on your phones. Add it to the home screen for a full-screen app. Data stays in that phone’s browser (`localStorage`).
 
 ## What you can do
 
@@ -11,9 +15,7 @@ A shared workout tracker for two people. Log both sessions at the same time, inc
 - See **estimated calories** from lifts and cardio (uses the latest body weight in lb)
 - Log **body weight in pounds**, view it by date, and follow the trend
 
-Data stays in this browser (`localStorage`).
-
-## Run it
+## Run it locally
 
 ```bash
 npm install

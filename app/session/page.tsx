@@ -68,7 +68,7 @@ function SessionPageInner() {
 
   return (
     <div className={`person-${active} flex min-h-svh flex-col`}>
-      <header className="px-5 pt-6 pb-3">
+      <header className="px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
         <div className="mb-3 flex items-center justify-between">
           <Link href="/" className="text-sm font-medium text-muted">
             Home

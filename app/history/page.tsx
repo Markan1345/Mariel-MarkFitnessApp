@@ -8,6 +8,7 @@ import { PERSON_IDS, PEOPLE } from "@/lib/people";
 import { groupWorkoutsByDay } from "@/lib/stats";
 import { useFitnessStore } from "@/lib/use-fitness-store";
 import { bodyWeightPounds } from "@/lib/weight";
+import { workoutHref } from "@/lib/routes";
 import type { PersonId } from "@/lib/types";
 
 export default function HistoryPage() {
@@ -21,7 +22,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="px-5 pt-8 pb-3">
+      <header className="px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-3">
         <p className="text-sm tracking-[0.22em] text-muted uppercase">Together</p>
         <h1 className="font-display mt-2 text-4xl leading-none">History</h1>
       </header>
@@ -62,7 +63,7 @@ export default function HistoryPage() {
                     bodyWeightLb={bodyWeightPounds(state.weights, workout.personId)}
                     href={
                       workout.finishedAt
-                        ? `/${workout.personId}/workout/${workout.id}`
+                        ? workoutHref(workout.personId, workout.id)
                         : `/session?person=${workout.personId}`
                     }
                   />

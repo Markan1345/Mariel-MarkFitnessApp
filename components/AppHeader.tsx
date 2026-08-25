@@ -16,7 +16,7 @@ export function AppHeader({
   const person = PEOPLE[personId];
 
   return (
-    <header className="flex items-center justify-between gap-3 px-5 pt-6 pb-3">
+    <header className="flex items-center justify-between gap-3 px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
       {backHref ? (
         <Link href={backHref} className="text-sm font-medium text-muted">
           Back
