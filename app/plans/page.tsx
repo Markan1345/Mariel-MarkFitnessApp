@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { AppIcon } from "@/components/AppIcon";
 import { AppNav } from "@/components/AppNav";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { PersonTabs } from "@/components/PersonTabs";
@@ -107,11 +108,18 @@ export default function PlansPage() {
 
   return (
     <div className={`person-${personId} flex min-h-svh flex-col`}>
-      <header className="px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-3">
-        <p className="text-sm tracking-[0.22em] text-muted uppercase">Library</p>
-        <h1 className="font-display mt-2 text-4xl leading-none">Custom days</h1>
-        <p className="mt-3 text-sm text-muted">
-          Plan this week or next. Next week&apos;s workouts show in this plan, then become this week when the dates arrive.
+      <header className="px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="eyebrow">Training plan</p>
+            <h1 className="font-display mt-1 text-[2.65rem] leading-none">Build your week</h1>
+          </div>
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-sun text-ink shadow-[0_8px_18px_rgba(231,138,52,0.25)]">
+            <AppIcon name="calendar" className="h-6 w-6" />
+          </div>
+        </div>
+        <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-muted">
+          Set this week, prep the next, and walk into every session ready.
         </p>
         <div className="mt-4">
           <PersonTabs active={personId} onChange={setPersonId} live={{}} />
@@ -119,19 +127,39 @@ export default function PlansPage() {
       </header>
       <main className="flex-1 px-5 pb-8">
         {todaysPlan ? (
-          <div className="rounded-3xl border border-line bg-paper p-4">
-            <p className="text-xs tracking-[0.16em] text-muted uppercase">Today for {PEOPLE[personId].name}</p>
-            <p className="font-display mt-1 text-2xl">{todaysPlan.title}</p>
-            <p className="mt-1 text-sm text-muted">{todaysPlan.exercises.length} moves planned</p>
+          <div className="surface-card lift-card flex items-center justify-between p-4">
+            <div>
+              <p className="eyebrow">Today for {PEOPLE[personId].name}</p>
+              <p className="font-display mt-1 text-2xl">{todaysPlan.title}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-muted">
+                <AppIcon name="dumbbell" className="h-3.5 w-3.5" />
+                {todaysPlan.exercises.length} moves planned
+              </p>
+            </div>
+            <span className="accent-bg relative z-10 grid h-11 w-11 place-items-center rounded-2xl text-paper">
+              <AppIcon name="activity" className="h-5 w-5" />
+            </span>
           </div>
         ) : (
-          <div className="rounded-3xl border border-dashed border-line px-4 py-5 text-sm text-muted">
-            No custom workout assigned to today yet.
+          <div className="surface-card flex items-center gap-3 border-dashed p-4 text-sm text-muted">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-sun/30 text-gold">
+              <AppIcon name="plus" className="h-5 w-5" />
+            </span>
+            No workout assigned to today yet.
           </div>
         )}
 
         <section className="mt-6">
-          <div className="grid grid-cols-2 gap-1 rounded-full bg-line/70 p-1">
+          <div className="mb-3 flex items-end justify-between">
+            <div>
+              <p className="eyebrow">Schedule</p>
+              <h2 className="font-display text-2xl">Weekly lineup</h2>
+            </div>
+            <p className="text-xs font-bold text-muted" suppressHydrationWarning>
+              {formatWeekRange(selectedWeekStartDate)}
+            </p>
+          </div>
+          <div className="segmented-control grid grid-cols-2 gap-1">
             {(
               [
                 ["this", "This week"],
@@ -144,8 +172,8 @@ export default function PlansPage() {
                   key={id}
                   type="button"
                   onClick={() => setWeekView(id)}
-                  className={`rounded-full px-3 py-2 text-sm font-semibold ${
-                    selected ? "accent-bg text-paper" : "text-ink"
+                  className={`rounded-[0.85rem] px-3 py-2.5 text-sm font-extrabold ${
+                    selected ? "accent-bg text-paper shadow-sm" : "text-muted"
                   }`}
                 >
                   {label}
@@ -153,9 +181,6 @@ export default function PlansPage() {
               );
             })}
           </div>
-          <p className="mt-3 text-sm text-muted" suppressHydrationWarning>
-            {formatWeekRange(selectedWeekStartDate)}
-          </p>
           <div className="mt-3 grid gap-2">
             {datesInWeek(selectedWeekStartDate).map((date) => {
               const weekday = weekdayFromDate(date);
@@ -166,22 +191,45 @@ export default function PlansPage() {
                 <button
                   key={localDateKey(date)}
                   type="button"
-                  className="flex items-center justify-between rounded-2xl border border-line bg-paper px-4 py-3 text-left"
+                  className={`surface-card flex items-center justify-between px-3.5 py-3 text-left ${
+                    isToday ? "ring-2 ring-energy/50" : ""
+                  }`}
                   onClick={() => openDay(date)}
                 >
-                  <span>
-                    <span className="block text-sm font-medium">
-                      {WEEKDAYS[weekday].label}
-                      {isToday ? " · today" : ""}
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+                        plan ? "accent-soft accent-text" : "bg-bg text-muted"
+                      }`}
+                    >
+                      <span className="text-center">
+                        <span className="block text-[9px] font-extrabold tracking-wide uppercase">
+                          {WEEKDAYS[weekday].short}
+                        </span>
+                        <span className="block text-base font-extrabold leading-none" suppressHydrationWarning>
+                          {date.getDate()}
+                        </span>
+                      </span>
                     </span>
-                    <span className="text-xs text-muted" suppressHydrationWarning>
-                      {date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                      {plan
-                        ? ` · ${plan.title}${plannedForWeek ? "" : " · usual"}`
-                        : " · Tap to add"}
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1.5 text-sm font-extrabold">
+                        {plan ? plan.title : "Rest or add workout"}
+                        {isToday ? (
+                          <span className="rounded-full bg-sun/40 px-1.5 py-0.5 text-[9px] font-extrabold text-gold">
+                            TODAY
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="mt-0.5 block text-xs font-medium text-muted">
+                        {plan
+                          ? `${plan.exercises.length} moves${plannedForWeek ? " · planned" : " · usual"}`
+                          : "Tap to build this day"}
+                      </span>
                     </span>
                   </span>
-                  <span className="text-xs text-muted">{plan ? `${plan.exercises.length} moves` : "+"}</span>
+                  <span className="relative z-10 grid h-8 w-8 place-items-center rounded-xl bg-bg text-muted">
+                    <AppIcon name={plan ? "chevron-right" : "plus"} className="h-4 w-4" />
+                  </span>
                 </button>
               );
             })}
@@ -189,7 +237,7 @@ export default function PlansPage() {
           {weekView === "next" ? (
             <button
               type="button"
-              className="mt-3 w-full rounded-2xl border border-line bg-paper py-3 text-sm font-medium"
+              className="surface-card mt-3 flex w-full items-center justify-center gap-2 py-3 text-sm font-extrabold"
               onClick={() =>
                 patch((current) => ({
                   ...current,
@@ -202,14 +250,15 @@ export default function PlansPage() {
                 }))
               }
             >
-              Copy this week to next week
+              <AppIcon name="spark" className="h-4 w-4 text-energy" />
+              Fill open days from this week
             </button>
           ) : null}
         </section>
 
         <button
           type="button"
-          className="mt-4 w-full rounded-3xl border border-dashed border-line py-4 font-medium"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-[1.25rem] border-2 border-dashed border-energy/40 bg-energy/5 py-4 font-extrabold text-energy"
           onClick={() => {
             const today = weekdayFromDate(now);
             setAlsoUsual(true);
@@ -225,11 +274,13 @@ export default function PlansPage() {
             setBuilderOpen(true);
           }}
         >
+          <AppIcon name="plus" className="h-5 w-5" />
           New usual workout
         </button>
 
         {personPlans.filter((plan) => plan.weekday === null).length > 0 ? (
           <section className="mt-6">
+            <p className="eyebrow">Saved</p>
             <h2 className="font-display text-2xl">Saved customs</h2>
             <div className="mt-3 grid gap-2">
               {personPlans
@@ -238,7 +289,7 @@ export default function PlansPage() {
                   <button
                     key={plan.id}
                     type="button"
-                    className="rounded-2xl border border-line bg-paper px-4 py-3 text-left"
+                    className="surface-card px-4 py-3 text-left"
                     onClick={() => {
                       setAlsoUsual(false);
                       setEditing(plan);
@@ -254,7 +305,8 @@ export default function PlansPage() {
         ) : null}
 
         <section className="mt-8">
-          <h2 className="font-display text-2xl">Import weights</h2>
+          <p className="eyebrow">Programs</p>
+          <h2 className="font-display text-2xl">Import a training split</h2>
           <p className="mt-1 text-sm text-muted">
             Drop a program onto {PEOPLE[personId].name}&apos;s usual week. Customize next week without changing this one.
           </p>
@@ -264,17 +316,18 @@ export default function PlansPage() {
                 key={program.id}
                 type="button"
                 onClick={() => importForPerson(program.id)}
-                className="rounded-3xl border border-line bg-paper p-4 text-left"
+                className="surface-card lift-card p-4 text-left"
               >
-                <span className="font-medium">{program.title}</span>
+                <span className="font-extrabold">{program.title}</span>
                 <span className="mt-1 block text-sm text-muted">{program.blurb}</span>
-                <span className="mt-2 block text-xs tracking-wide text-muted uppercase">
+                <span className="mt-2 inline-flex rounded-full bg-sun/30 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-gold uppercase">
                   {program.days.length} days
                 </span>
               </button>
             ))}
           </div>
-          <label className="mt-3 block rounded-3xl border border-dashed border-line px-4 py-4 text-center text-sm">
+          <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-[1.25rem] border-2 border-dashed border-energy/40 bg-energy/5 px-4 py-4 text-center text-sm font-extrabold text-energy">
+            <AppIcon name="plus" className="h-4 w-4" />
             Import JSON program
             <input
               type="file"
@@ -334,10 +387,13 @@ function PlanBuilder({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40 p-3 sm:items-center">
-      <div className="flex max-h-[92svh] w-full max-w-[430px] flex-col rounded-3xl bg-paper p-5 shadow-2xl">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/55 p-3 backdrop-blur-sm sm:items-center">
+      <div className="surface-card flex max-h-[92svh] w-full max-w-[430px] flex-col p-5 shadow-2xl">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-3xl">Custom workout</h2>
+          <div>
+            <p className="eyebrow">Build session</p>
+            <h2 className="font-display text-3xl">Custom workout</h2>
+          </div>
           <button type="button" onClick={onClose} className="text-sm text-muted">
             Close
           </button>
@@ -350,13 +406,13 @@ function PlanBuilder({
         <input
           value={draft.title}
           onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-          className="mt-4 h-11 rounded-2xl border border-line bg-bg px-4"
+          className="input-shell mt-4 h-11 px-4"
           placeholder="Workout name"
         />
         <label className="mt-3 text-xs tracking-[0.14em] text-muted uppercase">
           Day
           <select
-            className="mt-1 h-11 w-full rounded-2xl border border-line bg-bg px-3"
+            className="input-shell mt-1 h-11 w-full px-3"
             value={draft.weekday ?? -1}
             onChange={(event) => {
               const value = Number(event.target.value);
@@ -391,8 +447,8 @@ function PlanBuilder({
           ) : (
             <ul className="grid gap-2">
               {draft.exercises.map((exercise, index) => (
-                <li key={`${exercise.name}-${index}`} className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2">
-                  <span>
+                <li key={`${exercise.name}-${index}`} className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2.5">
+                  <span className="font-bold">
                     {exercise.name}
                     <span className="ml-2 text-xs uppercase text-muted">{exercise.kind}</span>
                   </span>
@@ -414,15 +470,16 @@ function PlanBuilder({
           )}
           <button
             type="button"
-            className="mt-3 w-full rounded-2xl border border-dashed border-line py-3 text-sm font-medium"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-energy/40 bg-energy/5 py-3 text-sm font-extrabold text-energy"
             onClick={() => setPickerOpen(true)}
           >
+            <AppIcon name="plus" className="h-4 w-4" />
             Add lift or cardio
           </button>
         </div>
         <button
           type="button"
-          className="accent-bg mt-4 w-full rounded-2xl py-3 font-semibold text-paper"
+          className="accent-action mt-4 w-full py-3"
           onClick={() => onSave(draft, useEveryWeek)}
         >
           Save custom workout

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/components/AppNav";
+import { AppIcon, type AppIconName } from "@/components/AppIcon";
 import { TogetherStartSheet, type StartChoice } from "@/components/TogetherStartSheet";
 import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
@@ -46,47 +47,79 @@ export default function TogetherHome() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-3">
-        <p className="text-sm tracking-[0.22em] text-muted uppercase">Together</p>
-        <h1 className="font-display mt-2 text-4xl leading-none">Mark &amp; Mariel</h1>
-        <p className="mt-3 max-w-[34ch] text-sm leading-relaxed text-muted">
-          Log both sessions at once. Custom days, imported lifts, cardio, and body weight in pounds.
-        </p>
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <Link href="/plans" className="rounded-2xl border border-line bg-paper px-3 py-3 text-sm">
-            Custom days
-          </Link>
-          <Link href="/weight" className="rounded-2xl border border-line bg-paper px-3 py-3 text-sm">
-            Body weight
-          </Link>
-          <Link href="/history" className="rounded-2xl border border-line bg-paper px-3 py-3 text-sm">
-            History
-          </Link>
+      <header className="px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="eyebrow">Train together</p>
+            <h1 className="font-display mt-1 text-[2.65rem] leading-none">Ready to move?</h1>
+            <p className="mt-2 text-sm font-medium text-muted">Mark &amp; Mariel&apos;s training hub</p>
+          </div>
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-sun text-ink shadow-[0_8px_18px_rgba(231,138,52,0.25)]">
+            <AppIcon name="activity" className="h-6 w-6" />
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          {(
+            [
+              { href: "/plans", label: "Plan", detail: "Your week", icon: "calendar" },
+              { href: "/weight", label: "Weight", detail: "Track trend", icon: "scale" },
+              { href: "/history", label: "History", detail: "Past lifts", icon: "history" },
+            ] as { href: string; label: string; detail: string; icon: AppIconName }[]
+          ).map((item) => (
+            <Link key={item.href} href={item.href} className="surface-card px-3 py-3">
+              <AppIcon name={item.icon} className="h-5 w-5 text-energy" />
+              <span className="mt-2 block text-sm font-extrabold">{item.label}</span>
+              <span className="mt-0.5 block text-[10px] font-medium text-muted">{item.detail}</span>
+            </Link>
+          ))}
         </div>
       </header>
 
       <main className="flex-1 px-5 pb-8">
         {anyLive ? (
-          <Link href="/session" className="mt-2 block rounded-3xl bg-ink px-4 py-4 text-paper">
-            <p className="text-xs tracking-[0.18em] uppercase opacity-80">In progress</p>
-            <p className="font-display mt-1 text-2xl">Resume both</p>
-            <p className="mt-1 text-sm opacity-80">
-              {[live.mark && `Mark · ${live.mark.title}`, live.mariel && `Mariel · ${live.mariel.title}`]
-                .filter(Boolean)
-                .join("  ·  ")}
-            </p>
+          <Link href="/session" className="primary-action flex items-center justify-between px-5 py-4">
+            <span>
+              <span className="flex items-center gap-2 text-[11px] tracking-[0.16em] uppercase opacity-75">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-sun" />
+                Workout in progress
+              </span>
+              <span className="font-display mt-1 block text-2xl">Resume session</span>
+              <span className="mt-1 block text-xs font-medium opacity-70">
+                {[live.mark && `Mark · ${live.mark.title}`, live.mariel && `Mariel · ${live.mariel.title}`]
+                  .filter(Boolean)
+                  .join("  ·  ")}
+              </span>
+            </span>
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-paper/10">
+              <AppIcon name="chevron-right" className="h-5 w-5" />
+            </span>
           </Link>
         ) : (
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
-            className="mt-2 w-full rounded-3xl bg-ink py-4 text-lg font-semibold text-paper"
+            className="primary-action flex w-full items-center justify-between px-5 py-4 text-left"
           >
-            Start both workouts
+            <span>
+              <span className="text-[11px] tracking-[0.16em] uppercase opacity-70">Today&apos;s session</span>
+              <span className="font-display mt-1 block text-2xl">Start both workouts</span>
+            </span>
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sun text-ink">
+              <AppIcon name="dumbbell" className="h-6 w-6" />
+            </span>
           </button>
         )}
 
-        <div className="mt-4 grid gap-3">
+        <div className="mt-5 flex items-center justify-between">
+          <div>
+            <p className="eyebrow">Training team</p>
+            <h2 className="font-display text-2xl">This week</h2>
+          </div>
+          <span className="rounded-full bg-sun/40 px-3 py-1.5 text-xs font-extrabold text-gold">
+            Keep showing up
+          </span>
+        </div>
+        <div className="mt-3 grid gap-3">
           {PERSON_IDS.map((id) => {
             const person = PEOPLE[id];
             const workouts = workoutsForPerson(state, id);
@@ -95,31 +128,43 @@ export default function TogetherHome() {
             const todayPlan = planForDate(state.plans, id, new Date());
             const latestLb = latestWeight(state.weights, id);
             return (
-              <section key={id} className={`person-${id} rounded-3xl border border-line bg-paper p-4`}>
+              <section key={id} className={`person-${id} surface-card lift-card p-4`}>
                 <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <h2 className="font-display text-2xl">{person.name}</h2>
-                    <p className="text-sm text-muted">
-                      {week.length} session{week.length === 1 ? "" : "s"} this week
-                      {todayPlan ? ` · today: ${todayPlan.title}` : ""}
-                      {latestLb ? ` · ${latestLb.pounds} lb` : ""}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <span className="accent-bg grid h-11 w-11 place-items-center rounded-2xl text-xs font-extrabold text-paper shadow-sm">
+                      {person.short}
+                    </span>
+                    <div>
+                      <h3 className="font-display text-2xl leading-none">{person.name}</h3>
+                      <p className="mt-1 text-xs font-medium text-muted">
+                        {todayPlan ? `Today · ${todayPlan.title}` : "Plan today’s workout"}
+                      </p>
+                    </div>
                   </div>
-                  <span className="accent-bg grid h-9 w-9 place-items-center rounded-full text-[10px] font-semibold text-paper">
-                    {person.short}
-                  </span>
+                  <div className="relative z-10 text-right">
+                    <p className="font-display text-2xl leading-none">{week.length}</p>
+                    <p className="text-[10px] font-bold tracking-wide text-muted uppercase">sessions</p>
+                  </div>
                 </div>
                 <WeekStrip workouts={workouts} />
+                {latestLb ? (
+                  <p className="relative z-10 mt-3 flex items-center gap-1.5 text-xs font-bold text-muted">
+                    <AppIcon name="scale" className="h-3.5 w-3.5" />
+                    Latest {latestLb.pounds} lb
+                  </p>
+                ) : null}
                 {current ? (
                   <Link
                     href={`/session?person=${id}`}
-                    className="accent-bg mt-3 block rounded-2xl px-3 py-3 text-sm font-medium text-paper"
+                    className="accent-action relative z-10 mt-3 flex items-center justify-between px-4 py-3 text-sm"
                   >
-                    Resume {current.title}
+                    <span>Resume {current.title}</span>
+                    <AppIcon name="chevron-right" className="h-4 w-4" />
                   </Link>
                 ) : (
-                  <Link href={`/${id}`} className="mt-3 block text-sm text-muted">
-                    Open {person.name}&apos;s log
+                  <Link href={`/${id}`} className="relative z-10 mt-3 flex items-center justify-between border-t border-line/70 pt-3 text-sm font-bold">
+                    <span>Open {person.name}&apos;s dashboard</span>
+                    <AppIcon name="chevron-right" className="h-4 w-4 text-muted" />
                   </Link>
                 )}
               </section>
@@ -129,9 +174,12 @@ export default function TogetherHome() {
 
         <section className="mt-8">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-2xl">Recent</h3>
-            <Link href="/history" className="text-sm text-muted">
-              See all
+            <div>
+              <p className="eyebrow">Activity</p>
+              <h3 className="font-display text-2xl">Recent workouts</h3>
+            </div>
+            <Link href="/history" className="flex items-center gap-1 text-sm font-bold text-energy">
+              See all <AppIcon name="chevron-right" className="h-4 w-4" />
             </Link>
           </div>
           {recentDays.length === 0 ? (

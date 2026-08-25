@@ -17,13 +17,18 @@ export function SetRow({
   return (
     <div className="py-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-medium">Set {index + 1}</p>
+        <p className="flex items-center gap-2 text-sm font-extrabold">
+          <span className="accent-soft accent-text grid h-7 w-7 place-items-center rounded-lg text-xs">
+            {index + 1}
+          </span>
+          Set
+        </p>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => onChange({ ...set, completed: !set.completed })}
-            className={`grid h-9 min-w-9 place-items-center rounded-full px-3 text-sm font-semibold ${
-              set.completed ? "accent-bg text-paper" : "bg-line/80 text-muted"
+            className={`grid h-9 min-w-9 place-items-center rounded-xl px-3 text-sm font-extrabold ${
+              set.completed ? "accent-bg text-paper shadow-sm" : "bg-bg text-muted"
             }`}
             aria-label={set.completed ? "Mark set incomplete" : "Complete set"}
           >

@@ -29,10 +29,13 @@ export function StartWorkoutSheet({
     .slice(0, 4);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40 p-3 sm:items-center">
-      <div className="flex max-h-[90svh] w-full max-w-[430px] flex-col rounded-3xl bg-paper p-5 shadow-2xl">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/55 p-3 backdrop-blur-sm sm:items-center">
+      <div className="surface-card flex max-h-[90svh] w-full max-w-[430px] flex-col p-5 shadow-2xl">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-3xl">New session</h2>
+          <div>
+            <p className="eyebrow">Choose your workout</p>
+            <h2 className="font-display text-3xl">New session</h2>
+          </div>
           <button type="button" onClick={onClose} className="text-sm text-muted">
             Close
           </button>
@@ -50,7 +53,7 @@ export function StartWorkoutSheet({
             <button
               type="button"
               onClick={() => onStart({ type: "plan", plan: todayPlan })}
-              className="accent-bg w-full rounded-2xl py-3 font-semibold text-paper"
+              className="accent-action w-full py-3"
             >
               Start today · {todayPlan.title}
             </button>
@@ -58,7 +61,7 @@ export function StartWorkoutSheet({
             <button
               type="button"
               onClick={() => onStart({ type: "empty" })}
-              className="accent-bg w-full rounded-2xl py-3 font-semibold text-paper"
+              className="accent-action w-full py-3"
             >
               Start empty workout
             </button>
@@ -91,7 +94,7 @@ export function StartWorkoutSheet({
                     key={plan.id}
                     type="button"
                     onClick={() => onStart({ type: "plan", plan })}
-                    className="rounded-2xl border border-line bg-bg px-3 py-3 text-left"
+                    className="surface-card px-3 py-3 text-left"
                   >
                     <span className="font-medium">{plan.title}</span>
                     <span className="mt-1 block text-xs text-muted">
@@ -110,7 +113,7 @@ export function StartWorkoutSheet({
                 key={template.id}
                 type="button"
                 onClick={() => onStart({ type: "template", template })}
-                className="rounded-2xl border border-line bg-bg px-3 py-3 text-left"
+                className="surface-card px-3 py-3 text-left"
               >
                 <span className="font-medium">{template.title}</span>
                 <span className="mt-1 block text-xs text-muted">{template.exercises.length} exercises</span>
