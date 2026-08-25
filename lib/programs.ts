@@ -286,24 +286,17 @@ export function copyWeekPlans(
         plan.weekday === day.id &&
         plan.weekStart === toWeekStart,
     );
+    if (existing) continue;
     next = upsertPlan(
       next,
-      existing
-        ? {
-            ...existing,
-            title: source.title,
-            exercises: source.exercises.map((exercise) => ({ ...exercise })),
-            weekday: day.id,
-            weekStart: toWeekStart,
-          }
-        : createPlan({
-            personId,
-            title: source.title,
-            weekday: day.id,
-            weekStart: toWeekStart,
-            exercises: source.exercises.map((exercise) => ({ ...exercise })),
-            source: "custom",
-          }),
+      createPlan({
+        personId,
+        title: source.title,
+        weekday: day.id,
+        weekStart: toWeekStart,
+        exercises: source.exercises.map((exercise) => ({ ...exercise })),
+        source: "custom",
+      }),
     );
   }
   return next;

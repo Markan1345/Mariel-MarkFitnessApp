@@ -96,6 +96,24 @@ describe("programs", () => {
     );
   });
 
+  it("does not overwrite a next-week day that is already planned", () => {
+    const usual = createPlan({
+      personId: "mark",
+      title: "Usual Monday",
+      weekday: 1,
+      exercises: [{ name: "Back squat", kind: "strength" }],
+    });
+    const planned = createPlan({
+      personId: "mark",
+      title: "Next week strength",
+      weekday: 1,
+      weekStart: "2026-08-31",
+      exercises: [{ name: "Deadlift", kind: "strength" }],
+    });
+    const copied = copyWeekPlans([usual, planned], "mark", "2026-08-24", "2026-08-31");
+    expect(planForWeekday(copied, "mark", 1, "2026-08-31")?.title).toBe("Next week strength");
+  });
+
   it("saves a week plan without replacing the usual day unless asked", () => {
     const usual = createPlan({
       personId: "mark",
