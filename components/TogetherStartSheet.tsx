@@ -4,16 +4,11 @@ import { useState } from "react";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
 import { PEOPLE, PERSON_IDS } from "@/lib/people";
 import { isWeekday, planForWeekday, plansForPerson } from "@/lib/programs";
-import type { StartChoice } from "@/lib/start";
+import { defaultStartChoices, type StartChoice } from "@/lib/start";
 import type { CustomPlan, PersonId, Workout } from "@/lib/types";
 import { WEEKDAYS } from "@/lib/weekdays";
 
 export type { StartChoice };
-
-const EMPTY_CHOICES: Record<PersonId, StartChoice> = {
-  mark: { type: "empty" },
-  mariel: { type: "empty" },
-};
 
 export function TogetherStartSheet({
   open,
@@ -28,11 +23,33 @@ export function TogetherStartSheet({
   plans: CustomPlan[];
   onStart: (choices: Record<PersonId, StartChoice>) => void;
 }) {
-  const [choices, setChoices] = useState<Record<PersonId, StartChoice>>(EMPTY_CHOICES);
+  if (!open) return null;
+  return (
+    <TogetherStartSheetInner
+      lastWorkouts={lastWorkouts}
+      plans={plans}
+      onClose={onClose}
+      onStart={onStart}
+    />
+  );
+}
+
+function TogetherStartSheetInner({
+  lastWorkouts,
+  plans,
+  onClose,
+  onStart,
+}: {
+  lastWorkouts: Partial<Record<PersonId, Workout>>;
+  plans: CustomPlan[];
+  onClose: () => void;
+  onStart: (choices: Record<PersonId, StartChoice>) => void;
+}) {
+  const [choices, setChoices] = useState<Record<PersonId, StartChoice>>(() =>
+    defaultStartChoices(plans),
+  );
   const now = new Date();
   const today = now.getDay();
-
-  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/40 p-3 sm:items-center">

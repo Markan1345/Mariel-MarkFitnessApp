@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
-import { workoutFromChoice } from "@/lib/start";
+import { defaultStartChoices, workoutFromChoice } from "@/lib/start";
 import { createWorkout } from "@/lib/store";
 
 describe("workoutFromChoice", () => {
@@ -46,5 +46,22 @@ describe("workoutFromChoice", () => {
     });
     expect(fromPlan.title).toBe("Tuesday custom");
     expect(fromPlan.exercises.map((item) => item.kind)).toEqual(["strength", "cardio"]);
+  });
+
+  it("defaults each person to today's custom plan when one exists", () => {
+    const tuesday = new Date("2026-08-25T12:00:00");
+    const marielPlan = {
+      id: "plan_1",
+      personId: "mariel" as const,
+      title: "Tuesday custom",
+      weekday: 2 as const,
+      source: "custom" as const,
+      createdAt: "2026-08-25T00:00:00.000Z",
+      exercises: [{ name: "Treadmill", kind: "cardio" as const }],
+    };
+    const choices = defaultStartChoices([marielPlan], tuesday);
+    expect(choices.mariel).toEqual({ type: "plan", plan: marielPlan });
+    expect(choices.mark).toEqual({ type: "empty" });
+    expect(workoutFromChoice("mariel", choices.mariel).exercises[0].name).toBe("Treadmill");
   });
 });

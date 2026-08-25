@@ -7,6 +7,7 @@ import { PersonTabs } from "@/components/PersonTabs";
 import { WeightChart } from "@/components/WeightChart";
 import { PEOPLE } from "@/lib/people";
 import { useFitnessStore } from "@/lib/use-fitness-store";
+import { isDayKey, shiftDayKey } from "@/lib/numbers";
 import { createWeightEntry, latestWeight, todayKey, upsertWeight, weightTrend, weightsForPerson } from "@/lib/weight";
 import type { PersonId } from "@/lib/types";
 
@@ -20,7 +21,7 @@ export default function WeightPage() {
   const chartEntries = useMemo(() => entries.slice(-30), [entries]);
 
   function save() {
-    if (pounds === null || Number.isNaN(pounds) || pounds <= 0) return;
+    if (pounds === null || Number.isNaN(pounds) || pounds <= 0 || !isDayKey(date)) return;
     patch((current) => ({
       ...current,
       weights: upsertWeight(
@@ -79,12 +80,37 @@ export default function WeightPage() {
           <label className="mt-3 block text-xs tracking-[0.14em] text-muted uppercase">
             Date
             <input
-              type="date"
+              type="text"
+              inputMode="numeric"
+              placeholder="YYYY-MM-DD"
               value={date}
               onChange={(event) => setDate(event.target.value)}
               className="mt-1 h-11 w-full rounded-2xl border border-line bg-bg px-3"
             />
           </label>
+          <div className="mt-2 flex gap-2">
+            {[
+              { label: "Today", value: todayKey() },
+              { label: "7 days ago", value: shiftDayKey(todayKey(), -7) },
+              { label: "30 days ago", value: shiftDayKey(todayKey(), -30) },
+            ].map((chip) => (
+              <button
+                key={chip.label}
+                type="button"
+                onClick={() => setDate(chip.value)}
+                className={`rounded-full px-3 py-1.5 text-xs ${
+                  date === chip.value ? "accent-bg text-paper" : "bg-bg"
+                }`}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+          {date && !isDayKey(date) ? (
+            <p className="mt-2 text-xs text-[#b24a34]">Use YYYY-MM-DD, like {todayKey()}.</p>
+          ) : date && isDayKey(date) ? (
+            <p className="mt-2 text-xs text-muted">{formatLongDate(date)}</p>
+          ) : null}
           <label className="mt-3 block text-xs tracking-[0.14em] text-muted uppercase">
             Weight
             <div className="mt-1">
