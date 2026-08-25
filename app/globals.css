@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #efe6d8;
+  --ink: #1c1712;
+  --muted: #7a6f64;
+  --paper: #fffaf2;
+  --line: #e3d6c4;
+  --mark: #2c5b4e;
+  --mark-soft: #dce8e2;
+  --mariel: #b24a34;
+  --mariel-soft: #f3ddd6;
+  --gold: #c47a2c;
+}
+
+@theme inline {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-paper: var(--paper);
+  --color-line: var(--line);
+  --color-mark: var(--mark);
+  --color-mark-soft: var(--mark-soft);
+  --color-mariel: var(--mariel);
+  --color-mariel-soft: var(--mariel-soft);
+  --color-gold: var(--gold);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(44, 91, 78, 0.12), transparent 55%),
+    radial-gradient(900px 420px at 110% 0%, rgba(178, 74, 52, 0.14), transparent 50%),
+    var(--bg);
+  font-family: var(--font-sans);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.phone-shell {
+  width: min(430px, 100%);
+  min-height: 100svh;
+  margin: 0 auto;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 80%, transparent);
+}
+
+@media (min-width: 640px) {
+  body {
+    padding: 24px 0;
+  }
+
+  .phone-shell {
+    min-height: calc(100svh - 48px);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow:
+      0 30px 80px rgba(28, 23, 18, 0.12),
+      0 0 0 1px color-mix(in srgb, var(--line) 80%, transparent);
+  }
+}
+
+.person-mark {
+  --accent: var(--mark);
+  --accent-soft: var(--mark-soft);
+}
+
+.person-mariel {
+  --accent: var(--mariel);
+  --accent-soft: var(--mariel-soft);
+}
+
+.accent-bg {
+  background: var(--accent);
+}
+
+.accent-text {
+  color: var(--accent);
+}
+
+.accent-soft {
+  background: var(--accent-soft);
+}

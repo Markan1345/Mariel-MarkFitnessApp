@@ -1,0 +1,199 @@
+import type { AppState, ExerciseEntry, PersonId, SetEntry, Workout } from "./types";
+import { createId } from "./ids";
+
+export const STORAGE_KEY = "mm-fitness-v1";
+
+export function emptyState(): AppState {
+  return { version: 1, workouts: [] };
+}
+
+export function isAppState(value: unknown): value is AppState {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as AppState;
+  return candidate.version === 1 && Array.isArray(candidate.workouts);
+}
+
+export function parseState(raw: string | null): AppState {
+  if (!raw) return emptyState();
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (isAppState(parsed)) return parsed;
+  } catch {
+    return emptyState();
+  }
+  return emptyState();
+}
+
+export function workoutsForPerson(state: AppState, personId: PersonId): Workout[] {
+  return state.workouts
+    .filter((workout) => workout.personId === personId)
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+}
+
+export function getWorkout(state: AppState, id: string): Workout | undefined {
+  return state.workouts.find((workout) => workout.id === id);
+}
+
+export function activeWorkoutForPerson(
+  state: AppState,
+  personId: PersonId,
+): Workout | undefined {
+  return workoutsForPerson(state, personId).find((workout) => !workout.finishedAt);
+}
+
+export function upsertWorkout(state: AppState, workout: Workout): AppState {
+  const index = state.workouts.findIndex((item) => item.id === workout.id);
+  if (index === -1) {
+    return { ...state, workouts: [workout, ...state.workouts] };
+  }
+  const next = [...state.workouts];
+  next[index] = workout;
+  return { ...state, workouts: next };
+}
+
+export function deleteWorkout(state: AppState, id: string): AppState {
+  return {
+    ...state,
+    workouts: state.workouts.filter((workout) => workout.id !== id),
+  };
+}
+
+export function createSet(partial?: Partial<SetEntry>): SetEntry {
+  return {
+    id: createId("set"),
+    reps: partial?.reps ?? 8,
+    weight: partial?.weight ?? 0,
+    completed: partial?.completed ?? false,
+  };
+}
+
+export function createExercise(name: string, setCount = 1): ExerciseEntry {
+  return {
+    id: createId("ex"),
+    name,
+    notes: "",
+    sets: Array.from({ length: setCount }, () => createSet()),
+  };
+}
+
+export function createWorkout(input: {
+  personId: PersonId;
+  title: string;
+  exerciseNames?: string[];
+  startedAt?: string;
+}): Workout {
+  const exercises = (input.exerciseNames ?? []).map((name) => createExercise(name));
+  return {
+    id: createId("wo"),
+    personId: input.personId,
+    title: input.title,
+    startedAt: input.startedAt ?? new Date().toISOString(),
+    finishedAt: null,
+    notes: "",
+    exercises,
+  };
+}
+
+export function addExercise(workout: Workout, name: string): Workout {
+  return {
+    ...workout,
+    exercises: [...workout.exercises, createExercise(name)],
+  };
+}
+
+export function updateExercise(
+  workout: Workout,
+  exerciseId: string,
+  updater: (exercise: ExerciseEntry) => ExerciseEntry,
+): Workout {
+  return {
+    ...workout,
+    exercises: workout.exercises.map((exercise) =>
+      exercise.id === exerciseId ? updater(exercise) : exercise,
+    ),
+  };
+}
+
+export function removeExercise(workout: Workout, exerciseId: string): Workout {
+  return {
+    ...workout,
+    exercises: workout.exercises.filter((exercise) => exercise.id !== exerciseId),
+  };
+}
+
+export function addSet(workout: Workout, exerciseId: string): Workout {
+  return updateExercise(workout, exerciseId, (exercise) => {
+    const last = exercise.sets[exercise.sets.length - 1];
+    return {
+      ...exercise,
+      sets: [
+        ...exercise.sets,
+        createSet({
+          reps: last?.reps ?? 8,
+          weight: last?.weight ?? 0,
+        }),
+      ],
+    };
+  });
+}
+
+export function updateSet(
+  workout: Workout,
+  exerciseId: string,
+  setId: string,
+  updater: (set: SetEntry) => SetEntry,
+): Workout {
+  return updateExercise(workout, exerciseId, (exercise) => ({
+    ...exercise,
+    sets: exercise.sets.map((set) => (set.id === setId ? updater(set) : set)),
+  }));
+}
+
+export function removeSet(
+  workout: Workout,
+  exerciseId: string,
+  setId: string,
+): Workout {
+  return updateExercise(workout, exerciseId, (exercise) => ({
+    ...exercise,
+    sets: exercise.sets.filter((set) => set.id !== setId),
+  }));
+}
+
+export function finishWorkout(
+  workout: Workout,
+  finishedAt = new Date().toISOString(),
+): Workout {
+  return { ...workout, finishedAt };
+}
+
+export function duplicateWorkout(
+  workout: Workout,
+  startedAt = new Date().toISOString(),
+): Workout {
+  return {
+    ...workout,
+    id: createId("wo"),
+    startedAt,
+    finishedAt: null,
+    exercises: workout.exercises.map((exercise) => ({
+      ...exercise,
+      id: createId("ex"),
+      sets: exercise.sets.map((set) =>
+        createSet({
+          reps: set.reps,
+          weight: set.weight,
+          completed: false,
+        }),
+      ),
+    })),
+  };
+}
+
+export function completedSetCount(workout: Workout): { done: number; total: number } {
+  const sets = workout.exercises.flatMap((exercise) => exercise.sets);
+  return {
+    done: sets.filter((set) => set.completed).length,
+    total: sets.length,
+  };
+}
