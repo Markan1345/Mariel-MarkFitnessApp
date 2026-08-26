@@ -259,9 +259,20 @@ export function setDayMirror(
 ): CustomPlan[] {
   const { personId, weekday, weekStart, mirrorFrom, alsoUsual = false } = input;
   if (!mirrorFrom) {
-    const existing = ownedPlanForWeekday(plans, personId, weekday, weekStart);
-    if (!existing?.mirrorFrom) return plans;
-    return deletePlan(plans, existing.id);
+    let next = plans;
+    if (weekStart) {
+      const specific = next.find(
+        (plan) =>
+          plan.personId === personId &&
+          plan.weekday === weekday &&
+          plan.weekStart === weekStart &&
+          plan.mirrorFrom,
+      );
+      if (specific) next = deletePlan(next, specific.id);
+    }
+    const remaining = ownedPlanForWeekday(next, personId, weekday, weekStart);
+    if (remaining?.mirrorFrom) next = deletePlan(next, remaining.id);
+    return next;
   }
 
   const source = ownedPlanForWeekday(plans, mirrorFrom, weekday, weekStart);
@@ -275,11 +286,9 @@ export function setDayMirror(
     mirrorFrom,
     source: "custom",
   });
-  const withId = existing?.mirrorFrom
+  const withId = existing
     ? { ...mirrored, id: existing.id, createdAt: existing.createdAt }
-    : existing
-      ? { ...mirrored, id: existing.id, createdAt: existing.createdAt }
-      : mirrored;
+    : mirrored;
 
   return savePlanForWeek(plans, withId, alsoUsual);
 }

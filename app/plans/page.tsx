@@ -259,7 +259,7 @@ export default function PlansPage() {
                             weekday,
                             weekStart: selectedWeekStart,
                             mirrorFrom: "mark",
-                            alsoUsual: weekView === "this",
+                            alsoUsual: false,
                           }),
                         }))
                       }

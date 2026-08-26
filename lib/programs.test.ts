@@ -182,6 +182,33 @@ describe("programs", () => {
     expect(planForWeekday(plans, "mariel", 1)).toBeUndefined();
   });
 
+  it("clears both week-specific and usual mirrors when stopping", () => {
+    const markMonday = createPlan({
+      personId: "mark",
+      title: "5x5 A",
+      weekday: 1,
+      exercises: [{ name: "Back squat", kind: "strength" }],
+    });
+    let plans = setDayMirror([markMonday], {
+      personId: "mariel",
+      weekday: 1,
+      weekStart: "2026-08-24",
+      mirrorFrom: "mark",
+      alsoUsual: true,
+    });
+    expect(planForWeekday(plans, "mariel", 1, "2026-08-24")?.mirrorFrom).toBe("mark");
+    expect(planForWeekday(plans, "mariel", 1)?.mirrorFrom).toBe("mark");
+
+    plans = setDayMirror(plans, {
+      personId: "mariel",
+      weekday: 1,
+      weekStart: "2026-08-24",
+      mirrorFrom: null,
+    });
+    expect(planForWeekday(plans, "mariel", 1, "2026-08-24")).toBeUndefined();
+    expect(planForWeekday(plans, "mariel", 1)).toBeUndefined();
+  });
+
   it("copies Mark's day into Mariel's own editable plan", () => {
     const markMonday = createPlan({
       personId: "mark",
