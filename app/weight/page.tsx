@@ -6,6 +6,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { LiftProgressPanel } from "@/components/LiftProgressPanel";
 import { NumberStepper } from "@/components/NumberStepper";
 import { PersonTabs } from "@/components/PersonTabs";
+import { StickyPersonBar } from "@/components/StickyPersonBar";
 import { WeightChart } from "@/components/WeightChart";
 import { PEOPLE } from "@/lib/people";
 import { useFitnessStore } from "@/lib/use-fitness-store";
@@ -46,7 +47,7 @@ export default function WeightPage() {
 
   return (
     <div className={`person-${personId} flex min-h-svh flex-col`}>
-      <header className="px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-4">
+      <header className="px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-2">
         <div className="flex items-start justify-between">
           <div>
             <p className="eyebrow">Progress tracker</p>
@@ -63,16 +64,16 @@ export default function WeightPage() {
             ? `Log ${PEOPLE[personId].name}'s weight and keep an eye on the trend, not a single day.`
             : `See how ${PEOPLE[personId].name}'s top set on each lift moves over time.`}
         </p>
-        <div className="mt-4">
-          <PersonTabs
-            active={personId}
-            onChange={(id) => {
-              setPersonId(id);
-              setPounds(latestWeight(state.weights, id)?.pounds ?? null);
-            }}
-            live={{}}
-          />
-        </div>
+      </header>
+      <StickyPersonBar>
+        <PersonTabs
+          active={personId}
+          onChange={(id) => {
+            setPersonId(id);
+            setPounds(latestWeight(state.weights, id)?.pounds ?? null);
+          }}
+          live={{}}
+        />
         <div className="mt-3 grid grid-cols-2 gap-2">
           {(
             [
@@ -92,8 +93,8 @@ export default function WeightPage() {
             </button>
           ))}
         </div>
-      </header>
-      <main className="flex-1 px-5 pb-8">
+      </StickyPersonBar>
+      <main className="flex-1 px-5 pt-4 pb-8">
         {mode === "lifts" ? (
           <LiftProgressPanel workouts={state.workouts} personId={personId} />
         ) : (
