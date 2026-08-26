@@ -171,6 +171,7 @@ export function createPlan(input: {
   exercises: PlannedExercise[];
   source?: CustomPlan["source"];
   weekStart?: string | null;
+  mirrorFrom?: PersonId | null;
 }): CustomPlan {
   return {
     id: createId("plan"),
@@ -180,6 +181,7 @@ export function createPlan(input: {
     weekStart: input.weekStart ?? null,
     exercises: input.exercises,
     source: input.source ?? "custom",
+    mirrorFrom: input.mirrorFrom ?? null,
     createdAt: new Date().toISOString(),
   };
 }
@@ -190,7 +192,7 @@ export function plansForPerson(plans: CustomPlan[], personId: PersonId): CustomP
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export function planForWeekday(
+function ownedPlanForWeekday(
   plans: CustomPlan[],
   personId: PersonId,
   weekday: Weekday,
@@ -206,6 +208,35 @@ export function planForWeekday(
   return personPlans.find((plan) => plan.weekday === weekday && !plan.weekStart);
 }
 
+export function resolveMirroredPlan(plans: CustomPlan[], plan: CustomPlan): CustomPlan {
+  if (!plan.mirrorFrom || plan.weekday === null || plan.mirrorFrom === plan.personId) {
+    return plan;
+  }
+  const source = ownedPlanForWeekday(plans, plan.mirrorFrom, plan.weekday, plan.weekStart);
+  if (!source || source.mirrorFrom) {
+    return {
+      ...plan,
+      title: plan.title || `Mirror ${plan.mirrorFrom}`,
+      exercises: [],
+    };
+  }
+  return {
+    ...plan,
+    title: source.title,
+    exercises: source.exercises.map((exercise) => ({ ...exercise })),
+  };
+}
+
+export function planForWeekday(
+  plans: CustomPlan[],
+  personId: PersonId,
+  weekday: Weekday,
+  weekStart?: string | null,
+): CustomPlan | undefined {
+  const owned = ownedPlanForWeekday(plans, personId, weekday, weekStart);
+  return owned ? resolveMirroredPlan(plans, owned) : undefined;
+}
+
 export function planForDate(
   plans: CustomPlan[],
   personId: PersonId,
@@ -214,6 +245,71 @@ export function planForDate(
   const weekday = date.getDay();
   if (!isWeekday(weekday)) return undefined;
   return planForWeekday(plans, personId, weekday, weekStartKey(date));
+}
+
+export function setDayMirror(
+  plans: CustomPlan[],
+  input: {
+    personId: PersonId;
+    weekday: Weekday;
+    weekStart: string | null;
+    mirrorFrom: PersonId | null;
+    alsoUsual?: boolean;
+  },
+): CustomPlan[] {
+  const { personId, weekday, weekStart, mirrorFrom, alsoUsual = false } = input;
+  if (!mirrorFrom) {
+    const existing = ownedPlanForWeekday(plans, personId, weekday, weekStart);
+    if (!existing?.mirrorFrom) return plans;
+    return deletePlan(plans, existing.id);
+  }
+
+  const source = ownedPlanForWeekday(plans, mirrorFrom, weekday, weekStart);
+  const existing = ownedPlanForWeekday(plans, personId, weekday, weekStart);
+  const mirrored = createPlan({
+    personId,
+    title: source?.title ?? `Mirror ${mirrorFrom}`,
+    weekday,
+    weekStart,
+    exercises: [],
+    mirrorFrom,
+    source: "custom",
+  });
+  const withId = existing?.mirrorFrom
+    ? { ...mirrored, id: existing.id, createdAt: existing.createdAt }
+    : existing
+      ? { ...mirrored, id: existing.id, createdAt: existing.createdAt }
+      : mirrored;
+
+  return savePlanForWeek(plans, withId, alsoUsual);
+}
+
+export function copyPlanFromPerson(
+  plans: CustomPlan[],
+  input: {
+    personId: PersonId;
+    fromPersonId: PersonId;
+    weekday: Weekday;
+    weekStart: string | null;
+    alsoUsual?: boolean;
+  },
+): CustomPlan[] {
+  const source = planForWeekday(plans, input.fromPersonId, input.weekday, input.weekStart ?? undefined);
+  if (!source) return plans;
+  const existing = ownedPlanForWeekday(plans, input.personId, input.weekday, input.weekStart);
+  const copied = createPlan({
+    personId: input.personId,
+    title: source.title,
+    weekday: input.weekday,
+    weekStart: input.weekStart,
+    exercises: source.exercises.map((exercise) => ({ ...exercise })),
+    mirrorFrom: null,
+    source: "custom",
+  });
+  const withId = existing
+    ? { ...copied, id: existing.id, createdAt: existing.createdAt }
+    : copied;
+  return savePlanForWeek(plans, withId, input.alsoUsual ?? false);
 }
 
 export function upsertPlan(plans: CustomPlan[], next: CustomPlan): CustomPlan[] {
@@ -257,6 +353,7 @@ export function savePlanForWeek(
           ...repeating,
           title: plan.title,
           exercises: plan.exercises.map((exercise) => ({ ...exercise })),
+          mirrorFrom: plan.mirrorFrom,
         }
       : createPlan({
           personId: plan.personId,
@@ -265,6 +362,7 @@ export function savePlanForWeek(
           weekStart: null,
           exercises: plan.exercises.map((exercise) => ({ ...exercise })),
           source: plan.source,
+          mirrorFrom: plan.mirrorFrom,
         }),
   );
 }
@@ -291,11 +389,14 @@ export function copyWeekPlans(
       next,
       createPlan({
         personId,
-        title: source.title,
+        title: source.mirrorFrom ? source.title : source.title,
         weekday: day.id,
         weekStart: toWeekStart,
-        exercises: source.exercises.map((exercise) => ({ ...exercise })),
+        exercises: source.mirrorFrom
+          ? []
+          : source.exercises.map((exercise) => ({ ...exercise })),
         source: "custom",
+        mirrorFrom: source.mirrorFrom,
       }),
     );
   }

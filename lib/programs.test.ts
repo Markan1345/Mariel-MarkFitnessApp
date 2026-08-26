@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   copyWeekPlans,
+  copyPlanFromPerson,
   createPlan,
   importProgram,
   parseImportedProgram,
   planForDate,
   planForWeekday,
   savePlanForWeek,
+  setDayMirror,
   upsertPlan,
   WORKOUT_PROGRAMS,
 } from "@/lib/programs";
@@ -136,5 +138,66 @@ describe("programs", () => {
     expect(planForWeekday(withUsual, "mark", 5)?.title).toBe("Long run");
     expect(planForWeekday(withUsual, "mark", 5)?.weekStart).toBeNull();
     expect(planForWeekday(withUsual, "mark", 5, "2026-08-31")?.title).toBe("Long run");
+  });
+
+  it("lets Mariel mirror Mark's workout for a specific day", () => {
+    const markMonday = createPlan({
+      personId: "mark",
+      title: "5x5 A",
+      weekday: 1,
+      exercises: [
+        { name: "Back squat", kind: "strength" },
+        { name: "Barbell bench press", kind: "strength" },
+      ],
+    });
+    let plans = setDayMirror([markMonday], {
+      personId: "mariel",
+      weekday: 1,
+      weekStart: null,
+      mirrorFrom: "mark",
+    });
+
+    const mirrored = planForWeekday(plans, "mariel", 1);
+    expect(mirrored?.mirrorFrom).toBe("mark");
+    expect(mirrored?.title).toBe("5x5 A");
+    expect(mirrored?.exercises.map((item) => item.name)).toEqual([
+      "Back squat",
+      "Barbell bench press",
+    ]);
+
+    plans = upsertPlan(plans, {
+      ...markMonday,
+      title: "Updated 5x5 A",
+      exercises: [{ name: "Deadlift", kind: "strength" }],
+    });
+    expect(planForWeekday(plans, "mariel", 1)?.title).toBe("Updated 5x5 A");
+    expect(planForWeekday(plans, "mariel", 1)?.exercises[0].name).toBe("Deadlift");
+
+    plans = setDayMirror(plans, {
+      personId: "mariel",
+      weekday: 1,
+      weekStart: null,
+      mirrorFrom: null,
+    });
+    expect(planForWeekday(plans, "mariel", 1)).toBeUndefined();
+  });
+
+  it("copies Mark's day into Mariel's own editable plan", () => {
+    const markMonday = createPlan({
+      personId: "mark",
+      title: "Push",
+      weekday: 1,
+      exercises: [{ name: "Overhead press", kind: "strength" }],
+    });
+    const plans = copyPlanFromPerson([markMonday], {
+      personId: "mariel",
+      fromPersonId: "mark",
+      weekday: 1,
+      weekStart: null,
+    });
+    const copied = planForWeekday(plans, "mariel", 1);
+    expect(copied?.mirrorFrom).toBeNull();
+    expect(copied?.title).toBe("Push");
+    expect(copied?.exercises[0].name).toBe("Overhead press");
   });
 });

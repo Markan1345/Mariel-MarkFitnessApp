@@ -61,6 +61,8 @@ export interface CustomPlan {
   weekStart: string | null;
   exercises: PlannedExercise[];
   source: "custom" | "import";
+  /** When set, this day follows that person's workout for the same weekday. */
+  mirrorFrom?: PersonId | null;
   createdAt: string;
 }
 

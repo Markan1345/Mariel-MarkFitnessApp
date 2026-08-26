@@ -18,6 +18,7 @@ import {
   planForWeekday,
   plansForPerson,
   savePlanForWeek,
+  setDayMirror,
 } from "@/lib/programs";
 import { useFitnessStore } from "@/lib/use-fitness-store";
 import {
@@ -101,7 +102,10 @@ export default function PlansPage() {
           title: effective?.title ?? `${WEEKDAYS[weekday].label} workout`,
           weekday,
           weekStart,
-          exercises: (effective?.exercises ?? []).map((exercise) => ({ ...exercise })),
+          exercises: effective?.mirrorFrom
+            ? []
+            : (effective?.exercises ?? []).map((exercise) => ({ ...exercise })),
+          mirrorFrom: effective?.mirrorFrom ?? null,
         }),
     );
     setBuilderOpen(true);
@@ -188,50 +192,102 @@ export default function PlansPage() {
               const plan = planForWeekday(state.plans, personId, weekday, selectedWeekStart);
               const plannedForWeek = plan?.weekStart === selectedWeekStart;
               const isToday = localDateKey(date) === localDateKey(now);
+              const partnerId: PersonId = personId === "mark" ? "mariel" : "mark";
+              const partnerPlan = planForWeekday(state.plans, partnerId, weekday, selectedWeekStart);
+              const mirroring = Boolean(plan?.mirrorFrom);
               return (
-                <button
+                <div
                   key={localDateKey(date)}
-                  type="button"
-                  className={`surface-card flex items-center justify-between px-3.5 py-3 text-left ${
-                    isToday ? "ring-2 ring-energy/50" : ""
-                  }`}
-                  onClick={() => openDay(date)}
+                  className={`surface-card overflow-hidden ${isToday ? "ring-2 ring-energy/50" : ""}`}
                 >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span
-                      className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
-                        plan ? "accent-soft accent-text" : "bg-bg text-muted"
-                      }`}
-                    >
-                      <span className="text-center">
-                        <span className="block text-[9px] font-extrabold tracking-wide uppercase">
-                          {WEEKDAYS[weekday].short}
-                        </span>
-                        <span className="block text-base font-extrabold leading-none" suppressHydrationWarning>
-                          {date.getDate()}
-                        </span>
-                      </span>
-                    </span>
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-1.5 text-sm font-extrabold">
-                        {plan ? plan.title : "Rest or add workout"}
-                        {isToday ? (
-                          <span className="rounded-full bg-sun/40 px-1.5 py-0.5 text-[9px] font-extrabold text-gold">
-                            TODAY
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-3.5 py-3 text-left"
+                    onClick={() => openDay(date)}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span
+                        className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+                          plan ? "accent-soft accent-text" : "bg-bg text-muted"
+                        }`}
+                      >
+                        <span className="text-center">
+                          <span className="block text-[9px] font-extrabold tracking-wide uppercase">
+                            {WEEKDAYS[weekday].short}
                           </span>
-                        ) : null}
+                          <span className="block text-base font-extrabold leading-none" suppressHydrationWarning>
+                            {date.getDate()}
+                          </span>
+                        </span>
                       </span>
-                      <span className="mt-0.5 block text-xs font-medium text-muted">
-                        {plan
-                          ? `${plan.exercises.length} moves${plannedForWeek ? " · planned" : " · usual"}`
-                          : "Tap to build this day"}
+                      <span className="min-w-0">
+                        <span className="flex flex-wrap items-center gap-1.5 text-sm font-extrabold">
+                          {plan ? plan.title : "Rest or add workout"}
+                          {isToday ? (
+                            <span className="rounded-full bg-sun/40 px-1.5 py-0.5 text-[9px] font-extrabold text-gold">
+                              TODAY
+                            </span>
+                          ) : null}
+                          {mirroring ? (
+                            <span className="rounded-full bg-energy/15 px-1.5 py-0.5 text-[9px] font-extrabold text-energy">
+                              Mirrors {PEOPLE[plan!.mirrorFrom!].name}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="mt-0.5 block text-xs font-medium text-muted">
+                          {plan
+                            ? `${plan.exercises.length} moves${
+                                mirroring ? "" : plannedForWeek ? " · planned" : " · usual"
+                              }`
+                            : "Tap to build this day"}
+                        </span>
                       </span>
                     </span>
-                  </span>
-                  <span className="relative z-10 grid h-8 w-8 place-items-center rounded-xl bg-bg text-muted">
-                    <AppIcon name={plan ? "chevron-right" : "plus"} className="h-4 w-4" />
-                  </span>
-                </button>
+                    <span className="relative z-10 grid h-8 w-8 place-items-center rounded-xl bg-bg text-muted">
+                      <AppIcon name={plan ? "chevron-right" : "plus"} className="h-4 w-4" />
+                    </span>
+                  </button>
+                  {personId === "mariel" && partnerPlan && !mirroring ? (
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-center gap-1.5 border-t border-line/70 bg-bg/50 px-3 py-2 text-xs font-extrabold text-energy"
+                      onClick={() =>
+                        patch((current) => ({
+                          ...current,
+                          plans: setDayMirror(current.plans, {
+                            personId: "mariel",
+                            weekday,
+                            weekStart: selectedWeekStart,
+                            mirrorFrom: "mark",
+                            alsoUsual: weekView === "this",
+                          }),
+                        }))
+                      }
+                    >
+                      <AppIcon name="spark" className="h-3.5 w-3.5" />
+                      Mirror Mark · {partnerPlan.title}
+                    </button>
+                  ) : null}
+                  {personId === "mariel" && mirroring ? (
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-center gap-1.5 border-t border-line/70 bg-bg/50 px-3 py-2 text-xs font-extrabold text-muted"
+                      onClick={() =>
+                        patch((current) => ({
+                          ...current,
+                          plans: setDayMirror(current.plans, {
+                            personId: "mariel",
+                            weekday,
+                            weekStart: plan?.weekStart ?? selectedWeekStart,
+                            mirrorFrom: null,
+                          }),
+                        }))
+                      }
+                    >
+                      Stop mirroring Mark
+                    </button>
+                  ) : null}
+                </div>
               );
             })}
           </div>
@@ -350,6 +406,16 @@ export default function PlansPage() {
           plan={editing}
           alsoUsual={alsoUsual}
           weekLabel={editing.weekStart ? formatWeekRange(selectedWeekStartDate) : null}
+          partnerPlan={
+            editing.weekday !== null
+              ? planForWeekday(
+                  state.plans,
+                  editing.personId === "mark" ? "mariel" : "mark",
+                  editing.weekday,
+                  editing.weekStart,
+                )
+              : undefined
+          }
           onClose={() => {
             setBuilderOpen(false);
             setEditing(null);
@@ -366,6 +432,7 @@ function PlanBuilder({
   plan,
   alsoUsual,
   weekLabel,
+  partnerPlan,
   onClose,
   onSave,
   onDelete,
@@ -373,6 +440,7 @@ function PlanBuilder({
   plan: CustomPlan;
   alsoUsual: boolean;
   weekLabel: string | null;
+  partnerPlan?: CustomPlan;
   onClose: () => void;
   onSave: (plan: CustomPlan, alsoUsual: boolean) => void;
   onDelete?: (id: string) => void;
@@ -381,10 +449,42 @@ function PlanBuilder({
   const [useEveryWeek, setUseEveryWeek] = useState(alsoUsual);
   const [pickerOpen, setPickerOpen] = useState(false);
   const weekdayOptions = useMemo(() => [{ id: -1, label: "No specific day" }, ...WEEKDAYS], []);
+  const canMirrorMark =
+    draft.personId === "mariel" &&
+    draft.weekday !== null &&
+    Boolean(partnerPlan) &&
+    partnerPlan?.personId === "mark";
+  const mirroring = draft.mirrorFrom === "mark";
+  const displayExercises = mirroring && partnerPlan ? partnerPlan.exercises : draft.exercises;
 
   function addMove(name: string, kind: ExerciseKind) {
     const next: PlannedExercise = { name, kind };
-    setDraft((current) => ({ ...current, exercises: [...current.exercises, next] }));
+    setDraft((current) => ({
+      ...current,
+      mirrorFrom: null,
+      exercises: [...current.exercises, next],
+    }));
+  }
+
+  function enableMirror() {
+    if (!partnerPlan || draft.weekday === null) return;
+    setDraft({
+      ...draft,
+      title: partnerPlan.title,
+      mirrorFrom: "mark",
+      exercises: [],
+    });
+  }
+
+  function stopMirror({ keepExercises }: { keepExercises: boolean }) {
+    setDraft({
+      ...draft,
+      mirrorFrom: null,
+      exercises: keepExercises && partnerPlan
+        ? partnerPlan.exercises.map((exercise) => ({ ...exercise }))
+        : draft.exercises,
+      title: keepExercises && partnerPlan ? partnerPlan.title : draft.title,
+    });
   }
 
   return (
@@ -404,11 +504,48 @@ function PlanBuilder({
             Planning {weekLabel}
           </p>
         ) : null}
+        {canMirrorMark ? (
+          <div className="mt-3 rounded-2xl border border-line bg-bg/70 px-3 py-3">
+            <p className="text-xs font-bold tracking-[0.14em] text-muted uppercase">Mirror Mark</p>
+            <p className="mt-1 text-sm text-muted">
+              {mirroring
+                ? "This day follows Mark’s plan and updates when he changes it."
+                : `Use Mark’s ${partnerPlan?.title ?? "workout"} for this day.`}
+            </p>
+            {mirroring ? (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className="rounded-2xl border border-line bg-paper py-2 text-xs font-extrabold"
+                  onClick={() => stopMirror({ keepExercises: true })}
+                >
+                  Copy &amp; edit
+                </button>
+                <button
+                  type="button"
+                  className="rounded-2xl border border-line bg-paper py-2 text-xs font-extrabold text-muted"
+                  onClick={() => stopMirror({ keepExercises: false })}
+                >
+                  Stop mirroring
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="accent-action mt-2 w-full py-2.5 text-sm"
+                onClick={enableMirror}
+              >
+                Mirror Mark · {partnerPlan?.title}
+              </button>
+            )}
+          </div>
+        ) : null}
         <input
-          value={draft.title}
-          onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+          value={mirroring && partnerPlan ? partnerPlan.title : draft.title}
+          onChange={(event) => setDraft({ ...draft, title: event.target.value, mirrorFrom: null })}
           className="input-shell mt-4 h-11 px-4"
           placeholder="Workout name"
+          disabled={mirroring}
         />
         <label className="mt-3 text-xs tracking-[0.14em] text-muted uppercase">
           Day
@@ -422,6 +559,7 @@ function PlanBuilder({
                 ...draft,
                 weekday,
                 weekStart: weekday === null ? null : draft.weekStart,
+                mirrorFrom: weekday === null ? null : draft.mirrorFrom,
               });
             }}
           >
@@ -443,47 +581,67 @@ function PlanBuilder({
           </label>
         ) : null}
         <div className="mt-4 overflow-y-auto">
-          {draft.exercises.length === 0 ? (
-            <p className="text-sm text-muted">Add lifts and cardio for this day.</p>
+          {displayExercises.length === 0 ? (
+            <p className="text-sm text-muted">
+              {mirroring ? "Mark has no moves on this day yet." : "Add lifts and cardio for this day."}
+            </p>
           ) : (
             <ul className="grid gap-2">
-              {draft.exercises.map((exercise, index) => (
+              {displayExercises.map((exercise, index) => (
                 <li key={`${exercise.name}-${index}`} className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2.5">
                   <span className="font-bold">
                     {exercise.name}
                     <span className="ml-2 text-xs uppercase text-muted">{exercise.kind}</span>
                   </span>
-                  <button
-                    type="button"
-                    className="text-xs text-muted"
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        exercises: draft.exercises.filter((_, itemIndex) => itemIndex !== index),
-                      })
-                    }
-                  >
-                    Remove
-                  </button>
+                  {!mirroring ? (
+                    <button
+                      type="button"
+                      className="text-xs text-muted"
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          exercises: draft.exercises.filter((_, itemIndex) => itemIndex !== index),
+                        })
+                      }
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-bold tracking-wide text-muted uppercase">From Mark</span>
+                  )}
                 </li>
               ))}
             </ul>
           )}
-          <button
-            type="button"
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-energy/40 bg-energy/5 py-3 text-sm font-extrabold text-energy"
-            onClick={() => setPickerOpen(true)}
-          >
-            <AppIcon name="plus" className="h-4 w-4" />
-            Add lift or cardio
-          </button>
+          {!mirroring ? (
+            <button
+              type="button"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-energy/40 bg-energy/5 py-3 text-sm font-extrabold text-energy"
+              onClick={() => setPickerOpen(true)}
+            >
+              <AppIcon name="plus" className="h-4 w-4" />
+              Add lift or cardio
+            </button>
+          ) : null}
         </div>
         <button
           type="button"
           className="accent-action mt-4 w-full py-3"
-          onClick={() => onSave(draft, useEveryWeek)}
+          onClick={() =>
+            onSave(
+              mirroring
+                ? {
+                    ...draft,
+                    title: partnerPlan?.title ?? draft.title,
+                    exercises: [],
+                    mirrorFrom: "mark",
+                  }
+                : { ...draft, mirrorFrom: null },
+              useEveryWeek,
+            )
+          }
         >
-          Save custom workout
+          {mirroring ? "Save mirror day" : "Save custom workout"}
         </button>
         {onDelete ? (
           <button

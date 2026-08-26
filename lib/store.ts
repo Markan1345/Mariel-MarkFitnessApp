@@ -64,6 +64,7 @@ function normalizePlan(plan: CustomPlan): CustomPlan {
     weekday: plan.weekday ?? null,
     weekStart: plan.weekStart ?? null,
     exercises: plan.exercises ?? [],
+    mirrorFrom: plan.mirrorFrom ?? null,
   };
 }
 
