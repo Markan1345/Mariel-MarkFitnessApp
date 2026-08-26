@@ -87,7 +87,11 @@ a {
   max-width: 430px;
   min-height: 100svh;
   min-height: 100dvh;
+  max-height: 100svh;
+  max-height: 100dvh;
   margin: 0 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   background:
     linear-gradient(rgba(255, 253, 247, 0.84), rgba(255, 249, 237, 0.95)),
     repeating-linear-gradient(
@@ -104,8 +108,10 @@ a {
 
   .phone-shell {
     min-height: calc(100svh - 48px);
+    max-height: calc(100svh - 48px);
     border-radius: 28px;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     box-shadow:
       0 30px 80px rgba(78, 47, 21, 0.18),
       0 0 0 1px color-mix(in srgb, var(--line) 80%, transparent);
