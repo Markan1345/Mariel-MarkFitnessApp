@@ -5,6 +5,9 @@ import {
   formatLastLift,
   lastLiftForExercise,
   lastLiftsForPlan,
+  liftHistoryForExercise,
+  liftTrend,
+  trackedExercises,
 } from "@/lib/progression";
 
 describe("progression", () => {
@@ -140,5 +143,38 @@ describe("progression", () => {
     workout = finishWorkout(workout, "2026-08-22T12:00:00.000Z");
 
     expect(lastLiftForExercise([workout], "mariel", "Barbell bench press")?.weight).toBe(105);
+  });
+
+  it("builds chronological lift history and trend deltas", () => {
+    const sessions = [
+      { at: "2026-07-20T12:00:00.000Z", weight: 175 },
+      { at: "2026-08-10T12:00:00.000Z", weight: 180 },
+      { at: "2026-08-24T12:00:00.000Z", weight: 185 },
+    ].map(({ at, weight }) => {
+      let workout = createWorkout({
+        personId: "mark",
+        title: "5x5 A",
+        exerciseNames: ["Back squat"],
+      });
+      workout = updateSet(workout, workout.exercises[0].id, workout.exercises[0].sets[0].id, (set) => ({
+        ...set,
+        weight,
+        reps: 5,
+        completed: true,
+      }));
+      return finishWorkout(workout, at);
+    });
+
+    const history = liftHistoryForExercise(sessions, "mark", "Back squat");
+    expect(history.map((lift) => lift.weight)).toEqual([175, 180, 185]);
+
+    const tracked = trackedExercises(sessions, "mark");
+    expect(tracked).toHaveLength(1);
+    expect(tracked[0].sessions).toBe(3);
+    expect(tracked[0].last.weight).toBe(185);
+
+    const trend = liftTrend(history, new Date("2026-08-25T12:00:00"));
+    expect(trend.delta).toBe(5);
+    expect(trend.monthDelta).toBe(10);
   });
 });

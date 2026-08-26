@@ -65,7 +65,7 @@ export default function TogetherHome() {
           {(
             [
               { href: "/plans", label: "Plan", detail: "Your week", icon: "calendar" },
-              { href: "/weight", label: "Weight", detail: "Track trend", icon: "scale" },
+              { href: "/weight", label: "Weight", detail: "Body & lifts", icon: "scale" },
               { href: "/history", label: "History", detail: "Past lifts", icon: "history" },
             ] as { href: string; label: string; detail: string; icon: AppIconName }[]
           ).map((item) => (

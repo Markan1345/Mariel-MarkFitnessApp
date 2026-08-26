@@ -1,5 +1,5 @@
 import { formatDateLabel } from "@/lib/stats";
-import type { ExerciseEntry, PersonId, PlannedExercise, SetEntry, Workout } from "@/lib/types";
+import type { PersonId, PlannedExercise, SetEntry, Workout } from "@/lib/types";
 
 export interface LastLift {
   exerciseName: string;
@@ -118,4 +118,81 @@ export function formatLastLift(lift: LastLift): string {
 
 export function formatLastLiftShort(lift: LastLift): string {
   return `${lift.weight} lb · ${formatDateLabel(lift.liftedAt)}`;
+}
+
+export function liftHistoryForExercise(
+  workouts: Workout[],
+  personId: PersonId,
+  exerciseName: string,
+): LastLift[] {
+  const lifts: LastLift[] = [];
+
+  for (const workout of workouts) {
+    if (!isEligibleWorkout(workout, personId)) continue;
+    for (const lift of liftsFromWorkout(workout)) {
+      if (!exerciseNamesMatch(lift.exerciseName, exerciseName)) continue;
+      lifts.push(lift);
+    }
+  }
+
+  return lifts.sort((a, b) => a.liftedAt.localeCompare(b.liftedAt));
+}
+
+export function trackedExercises(
+  workouts: Workout[],
+  personId: PersonId,
+): { name: string; last: LastLift; sessions: number }[] {
+  const byName = new Map<string, { name: string; last: LastLift; sessions: number }>();
+
+  for (const workout of workouts) {
+    if (!isEligibleWorkout(workout, personId)) continue;
+    for (const lift of liftsFromWorkout(workout)) {
+      const key = normalizeExerciseName(lift.exerciseName);
+      const existing = byName.get(key);
+      if (!existing) {
+        byName.set(key, { name: lift.exerciseName, last: lift, sessions: 1 });
+        continue;
+      }
+      existing.sessions += 1;
+      if (lift.liftedAt.localeCompare(existing.last.liftedAt) > 0) {
+        existing.last = lift;
+        existing.name = lift.exerciseName;
+      }
+    }
+  }
+
+  return [...byName.values()].sort((a, b) => b.last.liftedAt.localeCompare(a.last.liftedAt));
+}
+
+export function liftTrend(history: LastLift[], now = new Date()) {
+  const current = history.at(-1) ?? null;
+  if (!current) {
+    return {
+      current: null,
+      previous: null,
+      delta: null,
+      weekDelta: null,
+      monthDelta: null,
+    };
+  }
+  const previous = history.at(-2) ?? null;
+  const today = now.getTime();
+  const weekAgo = today - 7 * 24 * 60 * 60 * 1000;
+  const monthAgo = today - 30 * 24 * 60 * 60 * 1000;
+  const weekPoint = [...history].reverse().find((lift) => new Date(lift.liftedAt).getTime() <= weekAgo);
+  const monthPoint = [...history]
+    .reverse()
+    .find((lift) => new Date(lift.liftedAt).getTime() <= monthAgo);
+
+  return {
+    current,
+    previous,
+    delta: previous ? roundTenth(current.weight - previous.weight) : null,
+    weekDelta: weekPoint ? roundTenth(current.weight - weekPoint.weight) : null,
+    monthDelta: monthPoint ? roundTenth(current.weight - monthPoint.weight) : null,
+  };
+}
+
+function roundTenth(value: number): number {
+  return Math.round(value * 10) / 10;
 }
