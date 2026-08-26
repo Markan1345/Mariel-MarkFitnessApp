@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppNav } from "@/components/AppNav";
 import { PersonTabs } from "@/components/PersonTabs";
+import { StickyPersonBar } from "@/components/StickyPersonBar";
 import { WorkoutEditor } from "@/components/WorkoutEditor";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
 import { isPersonId, PEOPLE } from "@/lib/people";
@@ -68,7 +69,7 @@ function SessionPageInner() {
 
   return (
     <div className={`person-${active} flex min-h-svh flex-col`}>
-      <header className="px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-3">
+      <header className="px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2">
         <div className="mb-3 flex items-center justify-between">
           <Link href="/" className="text-sm font-medium text-muted">
             Home
@@ -78,6 +79,8 @@ function SessionPageInner() {
             {person.short}
           </span>
         </div>
+      </header>
+      <StickyPersonBar>
         <PersonTabs
           active={active}
           onChange={(personId) => {
@@ -86,8 +89,8 @@ function SessionPageInner() {
           }}
           live={{ mark: Boolean(live.mark), mariel: Boolean(live.mariel) }}
         />
-      </header>
-      <main className="flex-1 px-5 pb-28">
+      </StickyPersonBar>
+      <main className="flex-1 px-5 pt-4 pb-28">
         {workout ? (
           <>
             <WorkoutEditor
