@@ -5,6 +5,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { AppNav } from "@/components/AppNav";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { PersonTabs } from "@/components/PersonTabs";
+import { StickyPersonBar } from "@/components/StickyPersonBar";
 import { PEOPLE } from "@/lib/people";
 import {
   WORKOUT_PROGRAMS,
@@ -108,7 +109,7 @@ export default function PlansPage() {
 
   return (
     <div className={`person-${personId} flex min-h-svh flex-col`}>
-      <header className="px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-4">
+      <header className="px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-2">
         <div className="flex items-start justify-between">
           <div>
             <p className="eyebrow">Training plan</p>
@@ -121,11 +122,11 @@ export default function PlansPage() {
         <p className="mt-3 max-w-[36ch] text-sm leading-relaxed text-muted">
           Set this week, prep the next, and walk into every session ready.
         </p>
-        <div className="mt-4">
-          <PersonTabs active={personId} onChange={setPersonId} live={{}} />
-        </div>
       </header>
-      <main className="flex-1 px-5 pb-8">
+      <StickyPersonBar>
+        <PersonTabs active={personId} onChange={setPersonId} live={{}} />
+      </StickyPersonBar>
+      <main className="flex-1 px-5 pt-4 pb-8">
         {todaysPlan ? (
           <div className="surface-card lift-card flex items-center justify-between p-4">
             <div>
