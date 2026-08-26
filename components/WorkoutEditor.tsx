@@ -15,11 +15,13 @@ import {
   updateSet,
 } from "@/lib/store";
 import { DEFAULT_BODY_WEIGHT_LB, estimateWorkoutCalories, formatCalories } from "@/lib/calories";
+import { lastLiftForExercise } from "@/lib/progression";
 import { formatDuration } from "@/lib/stats";
 import type { Workout } from "@/lib/types";
 
 export function WorkoutEditor({
   workout,
+  workouts = [],
   onChange,
   onFinish,
   onDelete,
@@ -27,6 +29,7 @@ export function WorkoutEditor({
   bodyWeightLb = DEFAULT_BODY_WEIGHT_LB,
 }: {
   workout: Workout;
+  workouts?: Workout[];
   onChange: (workout: Workout) => void;
   onFinish?: () => void;
   onDelete?: () => void;
@@ -96,6 +99,9 @@ export function WorkoutEditor({
             key={exercise.id}
             exercise={exercise}
             bodyWeightLb={bodyWeightLb}
+            lastLift={lastLiftForExercise(workouts, workout.personId, exercise.name, {
+              excludeWorkoutId: workout.finishedAt ? undefined : workout.id,
+            })}
             onChange={(next) => onChange(updateExercise(workout, exercise.id, () => next))}
             onAddSet={() => onChange(addSet(workout, exercise.id))}
             onRemove={() => onChange(removeExercise(workout, exercise.id))}

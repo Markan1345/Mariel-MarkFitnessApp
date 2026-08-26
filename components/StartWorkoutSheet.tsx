@@ -5,6 +5,7 @@ import { planForDate, plansForPerson } from "@/lib/programs";
 import type { StartChoice } from "@/lib/start";
 import type { CustomPlan, PersonId, Workout } from "@/lib/types";
 import { WEEKDAYS } from "@/lib/weekdays";
+import { WorkoutProgression } from "./WorkoutProgression";
 
 export function StartWorkoutSheet({
   open,
@@ -12,6 +13,7 @@ export function StartWorkoutSheet({
   personId,
   last,
   plans,
+  workouts,
   onStart,
 }: {
   open: boolean;
@@ -19,6 +21,7 @@ export function StartWorkoutSheet({
   personId: PersonId;
   last?: Workout;
   plans: CustomPlan[];
+  workouts: Workout[];
   onStart: (choice: StartChoice) => void;
 }) {
   if (!open) return null;
@@ -50,13 +53,20 @@ export function StartWorkoutSheet({
         </p>
         <div className="mt-4 overflow-y-auto">
           {todayPlan ? (
-            <button
-              type="button"
-              onClick={() => onStart({ type: "plan", plan: todayPlan })}
-              className="accent-action w-full py-3"
-            >
-              Start today · {todayPlan.title}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => onStart({ type: "plan", plan: todayPlan })}
+                className="accent-action w-full py-3"
+              >
+                Start today · {todayPlan.title}
+              </button>
+              <WorkoutProgression
+                workouts={workouts}
+                personId={personId}
+                exercises={todayPlan.exercises}
+              />
+            </>
           ) : (
             <button
               type="button"

@@ -92,6 +92,7 @@ function SessionPageInner() {
           <>
             <WorkoutEditor
               workout={workout}
+              workouts={state.workouts}
               onChange={upsert}
               onFinish={finishActive}
               finishLabel={`Finish ${person.name}`}

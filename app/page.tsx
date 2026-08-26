@@ -8,6 +8,7 @@ import { AppIcon, type AppIconName } from "@/components/AppIcon";
 import { TogetherStartSheet, type StartChoice } from "@/components/TogetherStartSheet";
 import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
+import { WorkoutProgression } from "@/components/WorkoutProgression";
 import { PEOPLE, PERSON_IDS } from "@/lib/people";
 import {
   activeWorkoutForPerson,
@@ -149,6 +150,13 @@ export default function TogetherHome() {
                   </div>
                 </div>
                 <WeekStrip workouts={workouts} />
+                {todayPlan ? (
+                  <WorkoutProgression
+                    workouts={state.workouts}
+                    personId={id}
+                    exercises={todayPlan.exercises}
+                  />
+                ) : null}
                 {latestLb ? (
                   <p className="relative z-10 mt-3 flex items-center gap-1.5 text-xs font-bold text-muted">
                     <AppIcon name="scale" className="h-3.5 w-3.5" />
@@ -227,6 +235,7 @@ export default function TogetherHome() {
         onClose={() => setSheetOpen(false)}
         lastWorkouts={last}
         plans={state.plans}
+        workouts={state.workouts}
         onStart={startBoth}
       />
     </div>

@@ -7,6 +7,7 @@ import { planForDate, plansForPerson } from "@/lib/programs";
 import { defaultStartChoices, type StartChoice } from "@/lib/start";
 import type { CustomPlan, PersonId, Workout } from "@/lib/types";
 import { WEEKDAYS } from "@/lib/weekdays";
+import { WorkoutProgression } from "./WorkoutProgression";
 
 export type { StartChoice };
 
@@ -15,12 +16,14 @@ export function TogetherStartSheet({
   onClose,
   lastWorkouts,
   plans,
+  workouts,
   onStart,
 }: {
   open: boolean;
   onClose: () => void;
   lastWorkouts: Partial<Record<PersonId, Workout>>;
   plans: CustomPlan[];
+  workouts: Workout[];
   onStart: (choices: Record<PersonId, StartChoice>) => void;
 }) {
   if (!open) return null;
@@ -28,6 +31,7 @@ export function TogetherStartSheet({
     <TogetherStartSheetInner
       lastWorkouts={lastWorkouts}
       plans={plans}
+      workouts={workouts}
       onClose={onClose}
       onStart={onStart}
     />
@@ -37,11 +41,13 @@ export function TogetherStartSheet({
 function TogetherStartSheetInner({
   lastWorkouts,
   plans,
+  workouts,
   onClose,
   onStart,
 }: {
   lastWorkouts: Partial<Record<PersonId, Workout>>;
   plans: CustomPlan[];
+  workouts: Workout[];
   onClose: () => void;
   onStart: (choices: Record<PersonId, StartChoice>) => void;
 }) {
@@ -78,6 +84,7 @@ function TogetherStartSheetInner({
               last={lastWorkouts[id]}
               plans={plansForPerson(plans, id)}
               todayPlan={planForDate(plans, id, now)}
+              workouts={workouts}
               value={choices[id]}
               onChange={(choice) => setChoices((current) => ({ ...current, [id]: choice }))}
             />
@@ -100,6 +107,7 @@ function PersonChoices({
   last,
   plans,
   todayPlan,
+  workouts,
   value,
   onChange,
 }: {
@@ -107,6 +115,7 @@ function PersonChoices({
   last?: Workout;
   plans: CustomPlan[];
   todayPlan?: CustomPlan;
+  workouts: Workout[];
   value: StartChoice;
   onChange: (choice: StartChoice) => void;
 }) {
@@ -171,6 +180,13 @@ function PersonChoices({
           />
         ))}
       </div>
+      {todayPlan && value.type === "plan" && value.plan.id === todayPlan.id ? (
+        <WorkoutProgression
+          workouts={workouts}
+          personId={personId}
+          exercises={todayPlan.exercises}
+        />
+      ) : null}
     </section>
   );
 }
