@@ -5,6 +5,7 @@ import { planForDate, plansForPerson } from "@/lib/programs";
 import type { StartChoice } from "@/lib/start";
 import type { CustomPlan, PersonId, Workout } from "@/lib/types";
 import { WEEKDAYS } from "@/lib/weekdays";
+import { WorkoutProgression } from "./WorkoutProgression";
 
 export function StartWorkoutSheet({
   open,
@@ -12,6 +13,7 @@ export function StartWorkoutSheet({
   personId,
   last,
   plans,
+  workouts,
   onStart,
 }: {
   open: boolean;
@@ -19,6 +21,7 @@ export function StartWorkoutSheet({
   personId: PersonId;
   last?: Workout;
   plans: CustomPlan[];
+  workouts: Workout[];
   onStart: (choice: StartChoice) => void;
 }) {
   if (!open) return null;
@@ -50,13 +53,20 @@ export function StartWorkoutSheet({
         </p>
         <div className="mt-4 overflow-y-auto">
           {todayPlan ? (
-            <button
-              type="button"
-              onClick={() => onStart({ type: "plan", plan: todayPlan })}
-              className="accent-action w-full py-3"
-            >
-              Start today · {todayPlan.title}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => onStart({ type: "plan", plan: todayPlan })}
+                className="accent-action w-full py-3"
+              >
+                Start today · {todayPlan.title}
+              </button>
+              <WorkoutProgression
+                workouts={workouts}
+                personId={personId}
+                exercises={todayPlan.exercises}
+              />
+            </>
           ) : (
             <button
               type="button"
@@ -76,13 +86,25 @@ export function StartWorkoutSheet({
             </button>
           ) : null}
           {last ? (
-            <button
-              type="button"
-              onClick={() => onStart({ type: "repeat", workout: last })}
-              className="mt-2 w-full rounded-2xl border border-line bg-bg py-3 font-medium"
-            >
-              Repeat {last.title}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => onStart({ type: "repeat", workout: last })}
+                className="mt-2 w-full rounded-2xl border border-line bg-bg py-3 font-medium"
+              >
+                Repeat {last.title}
+              </button>
+              {!todayPlan ? (
+                <WorkoutProgression
+                  workouts={workouts}
+                  personId={personId}
+                  exercises={last.exercises.map((exercise) => ({
+                    name: exercise.name,
+                    kind: exercise.kind ?? "strength",
+                  }))}
+                />
+              ) : null}
+            </>
           ) : null}
 
           {extras.length > 0 ? (

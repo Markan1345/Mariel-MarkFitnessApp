@@ -9,6 +9,7 @@ import { StartWorkoutSheet } from "@/components/StartWorkoutSheet";
 import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { isPersonId, PEOPLE } from "@/lib/people";
+import { WorkoutProgression } from "@/components/WorkoutProgression";
 import { planForDate } from "@/lib/programs";
 import { workoutFromChoice, type StartChoice } from "@/lib/start";
 import { activeWorkoutForPerson, linkWorkouts, workoutsForPerson } from "@/lib/store";
@@ -86,21 +87,38 @@ export default function PersonHome({
               Start workout
             </button>
             {todayPlan ? (
-              <button
-                type="button"
-                onClick={() => saveNew({ type: "plan", plan: todayPlan })}
-                className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
-              >
-                Start today · {todayPlan.title}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => saveNew({ type: "plan", plan: todayPlan })}
+                  className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
+                >
+                  Start today · {todayPlan.title}
+                </button>
+                <WorkoutProgression
+                  workouts={state.workouts}
+                  personId={personId}
+                  exercises={todayPlan.exercises}
+                />
+              </>
             ) : lastFinished ? (
-              <button
-                type="button"
-                onClick={() => saveNew({ type: "repeat", workout: lastFinished })}
-                className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
-              >
-                Repeat {lastFinished.title}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => saveNew({ type: "repeat", workout: lastFinished })}
+                  className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
+                >
+                  Repeat {lastFinished.title}
+                </button>
+                <WorkoutProgression
+                  workouts={state.workouts}
+                  personId={personId}
+                  exercises={lastFinished.exercises.map((exercise) => ({
+                    name: exercise.name,
+                    kind: exercise.kind ?? "strength",
+                  }))}
+                />
+              </>
             ) : null}
           </div>
         )}
@@ -139,6 +157,7 @@ export default function PersonHome({
         personId={personId}
         last={lastFinished}
         plans={state.plans}
+        workouts={state.workouts}
         onStart={saveNew}
       />
     </div>

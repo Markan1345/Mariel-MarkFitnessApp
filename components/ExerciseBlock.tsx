@@ -5,11 +5,14 @@ import { CardioBlock } from "./CardioBlock";
 import { AppIcon } from "./AppIcon";
 import { estimateExerciseCalories, formatCalories } from "@/lib/calories";
 import { kindForExercise } from "@/lib/exercises";
+import type { LastLift } from "@/lib/progression";
 import type { ExerciseEntry, SetEntry } from "@/lib/types";
+import { LastLiftHint } from "./LastLiftHint";
 
 export function ExerciseBlock({
   exercise,
   bodyWeightLb,
+  lastLift,
   onChange,
   onAddSet,
   onRemove,
@@ -18,6 +21,7 @@ export function ExerciseBlock({
 }: {
   exercise: ExerciseEntry;
   bodyWeightLb: number;
+  lastLift?: LastLift | null;
   onChange: (exercise: ExerciseEntry) => void;
   onAddSet: () => void;
   onRemove: () => void;
@@ -47,6 +51,7 @@ export function ExerciseBlock({
           <div>
             <p className="eyebrow">Strength</p>
             <h3 className="font-display text-2xl leading-tight">{exercise.name}</h3>
+            <LastLiftHint last={lastLift} />
             {kcal > 0 ? <p className="mt-1 text-xs font-bold text-muted">Est. {formatCalories(kcal)}</p> : null}
           </div>
         </div>

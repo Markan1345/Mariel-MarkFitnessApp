@@ -57,6 +57,7 @@ function WorkoutPageInner({
       <main className="flex-1 px-5 pb-10">
         <WorkoutEditor
           workout={workout}
+          workouts={state.workouts}
           onChange={upsert}
           bodyWeightLb={bodyWeightPounds(state.weights, personId)}
           onFinish={() => {
