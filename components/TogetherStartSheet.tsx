@@ -186,6 +186,15 @@ function PersonChoices({
           personId={personId}
           exercises={todayPlan.exercises}
         />
+      ) : value.type === "repeat" && last ? (
+        <WorkoutProgression
+          workouts={workouts}
+          personId={personId}
+          exercises={last.exercises.map((exercise) => ({
+            name: exercise.name,
+            kind: exercise.kind ?? "strength",
+          }))}
+        />
       ) : null}
     </section>
   );

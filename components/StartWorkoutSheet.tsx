@@ -86,13 +86,25 @@ export function StartWorkoutSheet({
             </button>
           ) : null}
           {last ? (
-            <button
-              type="button"
-              onClick={() => onStart({ type: "repeat", workout: last })}
-              className="mt-2 w-full rounded-2xl border border-line bg-bg py-3 font-medium"
-            >
-              Repeat {last.title}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => onStart({ type: "repeat", workout: last })}
+                className="mt-2 w-full rounded-2xl border border-line bg-bg py-3 font-medium"
+              >
+                Repeat {last.title}
+              </button>
+              {!todayPlan ? (
+                <WorkoutProgression
+                  workouts={workouts}
+                  personId={personId}
+                  exercises={last.exercises.map((exercise) => ({
+                    name: exercise.name,
+                    kind: exercise.kind ?? "strength",
+                  }))}
+                />
+              ) : null}
+            </>
           ) : null}
 
           {extras.length > 0 ? (

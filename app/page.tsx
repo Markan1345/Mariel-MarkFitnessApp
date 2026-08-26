@@ -156,6 +156,15 @@ export default function TogetherHome() {
                     personId={id}
                     exercises={todayPlan.exercises}
                   />
+                ) : last[id] ? (
+                  <WorkoutProgression
+                    workouts={state.workouts}
+                    personId={id}
+                    exercises={last[id]!.exercises.map((exercise) => ({
+                      name: exercise.name,
+                      kind: exercise.kind ?? "strength",
+                    }))}
+                  />
                 ) : null}
                 {latestLb ? (
                   <p className="relative z-10 mt-3 flex items-center gap-1.5 text-xs font-bold text-muted">

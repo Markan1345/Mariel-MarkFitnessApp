@@ -100,7 +100,7 @@ export function WorkoutEditor({
             exercise={exercise}
             bodyWeightLb={bodyWeightLb}
             lastLift={lastLiftForExercise(workouts, workout.personId, exercise.name, {
-              excludeWorkoutId: workout.finishedAt ? undefined : workout.id,
+              excludeWorkoutId: workout.id,
             })}
             onChange={(next) => onChange(updateExercise(workout, exercise.id, () => next))}
             onAddSet={() => onChange(addSet(workout, exercise.id))}

@@ -102,13 +102,23 @@ export default function PersonHome({
                 />
               </>
             ) : lastFinished ? (
-              <button
-                type="button"
-                onClick={() => saveNew({ type: "repeat", workout: lastFinished })}
-                className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
-              >
-                Repeat {lastFinished.title}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => saveNew({ type: "repeat", workout: lastFinished })}
+                  className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
+                >
+                  Repeat {lastFinished.title}
+                </button>
+                <WorkoutProgression
+                  workouts={state.workouts}
+                  personId={personId}
+                  exercises={lastFinished.exercises.map((exercise) => ({
+                    name: exercise.name,
+                    kind: exercise.kind ?? "strength",
+                  }))}
+                />
+              </>
             ) : null}
           </div>
         )}
