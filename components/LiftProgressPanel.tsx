@@ -50,13 +50,13 @@ export function LiftProgressPanel({
     <>
       <section className="surface-card lift-card p-4">
         <p className="eyebrow">Exercise trend</p>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-3 flex flex-wrap gap-2">
           {tracked.map((item) => (
             <button
               key={item.name}
               type="button"
               onClick={() => setSelected(item.name)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${
+              className={`rounded-full px-3 py-1.5 text-xs font-bold ${
                 selected === item.name ? "accent-bg text-paper" : "bg-bg text-muted"
               }`}
             >
