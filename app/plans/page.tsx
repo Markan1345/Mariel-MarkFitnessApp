@@ -5,6 +5,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { AppNav } from "@/components/AppNav";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { PersonTabs } from "@/components/PersonTabs";
+import { DragHandle, SortableList } from "@/components/SortableList";
 import { StickyPersonBar } from "@/components/StickyPersonBar";
 import { PEOPLE } from "@/lib/people";
 import {
@@ -22,6 +23,7 @@ import {
   setDayMirror,
   setDayRest,
 } from "@/lib/programs";
+import { reorderList } from "@/lib/reorder";
 import { useFitnessStore } from "@/lib/use-fitness-store";
 import {
   WEEKDAYS,
@@ -692,17 +694,34 @@ function PlanBuilder({
               {mirroring ? "Mark has no moves on this day yet." : "Add lifts and cardio for this day."}
             </p>
           ) : (
-            <ul className="grid gap-2">
-              {displayExercises.map((exercise, index) => (
-                <li key={`${exercise.name}-${index}`} className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2.5">
-                  <span className="font-bold">
-                    {exercise.name}
-                    <span className="ml-2 text-xs uppercase text-muted">{exercise.kind}</span>
-                  </span>
+            <SortableList
+              className="grid gap-2"
+              items={displayExercises.map((exercise, index) => ({
+                ...exercise,
+                id: `${exercise.name}-${index}`,
+                index,
+              }))}
+              getId={(item) => item.id}
+              onReorder={(fromIndex, toIndex) => {
+                if (mirroring) return;
+                setDraft({
+                  ...draft,
+                  exercises: reorderList(draft.exercises, fromIndex, toIndex),
+                });
+              }}
+              renderItem={(exercise, index, handle) => (
+                <div className="flex items-center justify-between gap-2 rounded-2xl bg-bg px-2 py-2.5">
+                  <div className="flex min-w-0 items-center gap-1">
+                    {!mirroring ? <DragHandle {...handle} /> : null}
+                    <span className="font-bold">
+                      {exercise.name}
+                      <span className="ml-2 text-xs uppercase text-muted">{exercise.kind}</span>
+                    </span>
+                  </div>
                   {!mirroring ? (
                     <button
                       type="button"
-                      className="text-xs text-muted"
+                      className="shrink-0 pr-1 text-xs text-muted"
                       onClick={() =>
                         setDraft({
                           ...draft,
@@ -713,11 +732,13 @@ function PlanBuilder({
                       Remove
                     </button>
                   ) : (
-                    <span className="text-[10px] font-bold tracking-wide text-muted uppercase">From Mark</span>
+                    <span className="pr-2 text-[10px] font-bold tracking-wide text-muted uppercase">
+                      From Mark
+                    </span>
                   )}
-                </li>
-              ))}
-            </ul>
+                </div>
+              )}
+            />
           )}
           {!mirroring && !resting ? (
             <button

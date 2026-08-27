@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { SetRow } from "./SetRow";
 import { CardioBlock } from "./CardioBlock";
 import { AppIcon } from "./AppIcon";
@@ -13,6 +14,7 @@ export function ExerciseBlock({
   exercise,
   bodyWeightLb,
   lastLift,
+  dragHandle,
   onChange,
   onAddSet,
   onRemove,
@@ -22,6 +24,7 @@ export function ExerciseBlock({
   exercise: ExerciseEntry;
   bodyWeightLb: number;
   lastLift?: LastLift | null;
+  dragHandle?: ReactNode;
   onChange: (exercise: ExerciseEntry) => void;
   onAddSet: () => void;
   onRemove: () => void;
@@ -33,6 +36,7 @@ export function ExerciseBlock({
       <CardioBlock
         exercise={exercise}
         bodyWeightLb={bodyWeightLb}
+        dragHandle={dragHandle}
         onChange={onChange}
         onRemove={onRemove}
       />
@@ -44,18 +48,19 @@ export function ExerciseBlock({
   return (
     <section className="surface-card p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {dragHandle}
           <span className="accent-soft accent-text grid h-10 w-10 shrink-0 place-items-center rounded-2xl">
             <AppIcon name="dumbbell" className="h-5 w-5" />
           </span>
-          <div>
+          <div className="min-w-0">
             <p className="eyebrow">Strength</p>
             <h3 className="font-display text-2xl leading-tight">{exercise.name}</h3>
             <LastLiftHint last={lastLift} />
             {kcal > 0 ? <p className="mt-1 text-xs font-bold text-muted">Est. {formatCalories(kcal)}</p> : null}
           </div>
         </div>
-        <button type="button" onClick={onRemove} className="text-xs text-muted">
+        <button type="button" onClick={onRemove} className="shrink-0 text-xs text-muted">
           Remove
         </button>
       </div>

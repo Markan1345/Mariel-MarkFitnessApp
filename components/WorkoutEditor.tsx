@@ -4,11 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { AppIcon } from "./AppIcon";
 import { ExerciseBlock } from "./ExerciseBlock";
 import { ExercisePicker } from "./ExercisePicker";
+import { DragHandle, SortableList } from "./SortableList";
 import {
   addExercise,
   addSet,
   cardioMinutes,
   completedSetCount,
+  moveExercise,
   removeExercise,
   removeSet,
   updateExercise,
@@ -93,12 +95,21 @@ export function WorkoutEditor({
         rows={2}
       />
 
-      <div className="mt-6 grid gap-3">
-        {workout.exercises.map((exercise) => (
+      {workout.exercises.length > 0 ? (
+        <p className="mt-6 text-xs font-bold tracking-wide text-muted uppercase">
+          Drag the handle to reorder
+        </p>
+      ) : null}
+      <SortableList
+        className="mt-2 grid gap-3"
+        items={workout.exercises}
+        getId={(exercise) => exercise.id}
+        onReorder={(fromIndex, toIndex) => onChange(moveExercise(workout, fromIndex, toIndex))}
+        renderItem={(exercise, _index, handle) => (
           <ExerciseBlock
-            key={exercise.id}
             exercise={exercise}
             bodyWeightLb={bodyWeightLb}
+            dragHandle={<DragHandle {...handle} />}
             lastLift={lastLiftForExercise(workouts, workout.personId, exercise.name, {
               excludeWorkoutId: workout.id,
             })}
@@ -108,8 +119,8 @@ export function WorkoutEditor({
             onUpdateSet={(set) => onChange(updateSet(workout, exercise.id, set.id, () => set))}
             onRemoveSet={(setId) => onChange(removeSet(workout, exercise.id, setId))}
           />
-        ))}
-      </div>
+        )}
+      />
 
       <button
         type="button"
