@@ -78,11 +78,21 @@ export interface WeightEntry {
   pounds: number;
 }
 
+export interface DailyStepLog {
+  id: string;
+  personId: PersonId;
+  date: string;
+  /** All-day / phone pedometer steps for this date. */
+  phoneSteps: number;
+  updatedAt: string;
+}
+
 export interface AppState {
   version: 2;
   workouts: Workout[];
   plans: CustomPlan[];
   weights: WeightEntry[];
+  stepLogs: DailyStepLog[];
 }
 
 export interface ExerciseTemplate {

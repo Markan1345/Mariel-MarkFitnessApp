@@ -9,6 +9,7 @@ import {
   unpackEnvelope,
 } from "@/lib/sync";
 import { createWorkout, emptyState } from "@/lib/store";
+import { createStepLog } from "@/lib/steps";
 import { createWeightEntry } from "@/lib/weight";
 
 describe("sync codes", () => {
@@ -58,6 +59,18 @@ describe("mergeAppStates", () => {
       false,
     );
     expect(merged.weights).toHaveLength(2);
+  });
+
+  it("merges daily step logs", () => {
+    const localSteps = createStepLog({ personId: "mark", date: "2026-08-27", phoneSteps: 1000 });
+    const remoteSteps = createStepLog({ personId: "mariel", date: "2026-08-27", phoneSteps: 4000 });
+    const merged = mergeAppStates(
+      { ...emptyState(), stepLogs: [localSteps] },
+      { ...emptyState(), stepLogs: [remoteSteps] },
+      [],
+      true,
+    );
+    expect(merged.stepLogs).toHaveLength(2);
   });
 });
 

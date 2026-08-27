@@ -1,4 +1,4 @@
-import type { AppState, CustomPlan, WeightEntry, Workout } from "./types";
+import type { AppState, CustomPlan, DailyStepLog, WeightEntry, Workout } from "./types";
 import { emptyState, isAppState, parseState } from "./store";
 import { decryptPayload, encryptPayload } from "./sync-crypto";
 import { loadLatestSnapshot, publishSnapshot } from "./sync-cloud";
@@ -68,12 +68,15 @@ export function isSyncEnvelope(value: unknown): value is SyncEnvelope {
   );
 }
 
-function entityStamp(item: Workout | CustomPlan | WeightEntry): string {
+function entityStamp(item: Workout | CustomPlan | WeightEntry | DailyStepLog): string {
   if ("finishedAt" in item) {
     return `${item.finishedAt ?? ""}|${item.startedAt}|${item.exercises.length}|${item.notes}`;
   }
   if ("createdAt" in item) {
     return `${item.createdAt}|${item.title}|${item.exercises.length}|${item.kind ?? ""}|${item.mirrorFrom ?? ""}`;
+  }
+  if ("phoneSteps" in item) {
+    return `${item.date}|${item.phoneSteps}|${item.updatedAt}`;
   }
   return `${item.date}|${item.pounds}`;
 }
@@ -131,6 +134,13 @@ export function mergeAppStates(
     ),
     plans: mergeCollection(local.plans, remote.plans, removed, preferRemote, entityStamp),
     weights: mergeCollection(local.weights, remote.weights, removed, preferRemote, entityStamp),
+    stepLogs: mergeCollection(
+      local.stepLogs ?? [],
+      remote.stepLogs ?? [],
+      removed,
+      preferRemote,
+      entityStamp,
+    ),
   };
 }
 
@@ -163,6 +173,7 @@ export function buildEnvelope(input: {
       workouts: input.state.workouts,
       plans: input.state.plans ?? [],
       weights: input.state.weights ?? [],
+      stepLogs: input.state.stepLogs ?? [],
     },
     removedIds: normalizeRemovedIds(input.removedIds ?? []),
   };

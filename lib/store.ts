@@ -18,7 +18,7 @@ export { reorderList } from "./reorder";
 export const STORAGE_KEY = "mm-fitness-v1";
 
 export function emptyState(): AppState {
-  return { version: 2, workouts: [], plans: [], weights: [] };
+  return { version: 2, workouts: [], plans: [], weights: [], stepLogs: [] };
 }
 
 export function isLegacyState(value: unknown): value is { version: 1; workouts: Workout[] } {
@@ -34,7 +34,8 @@ export function isAppState(value: unknown): value is AppState {
     candidate.version === 2 &&
     Array.isArray(candidate.workouts) &&
     (candidate.plans === undefined || Array.isArray(candidate.plans)) &&
-    (candidate.weights === undefined || Array.isArray(candidate.weights))
+    (candidate.weights === undefined || Array.isArray(candidate.weights)) &&
+    (candidate.stepLogs === undefined || Array.isArray(candidate.stepLogs))
   );
 }
 
@@ -92,6 +93,7 @@ export function parseState(raw: string | null): AppState {
         workouts: parsed.workouts.map(normalizeWorkout),
         plans: (parsed.plans ?? []).map(normalizePlan),
         weights: parsed.weights ?? [],
+        stepLogs: parsed.stepLogs ?? [],
       };
     }
     if (isLegacyState(parsed)) {
@@ -100,6 +102,7 @@ export function parseState(raw: string | null): AppState {
         workouts: parsed.workouts.map(normalizeWorkout),
         plans: [],
         weights: [],
+        stepLogs: [],
       };
     }
   } catch {

@@ -171,7 +171,8 @@ export async function joinHouseholdSync(code: string): Promise<void> {
     if (!remote) throw new Error("No sync room found for that code");
     const local = readState();
     const preferRemote =
-      local.workouts.length + local.plans.length + local.weights.length === 0;
+      local.workouts.length + local.plans.length + local.weights.length + (local.stepLogs?.length ?? 0) ===
+      0;
     const merged = applyRemoteToLocal({
       local,
       remote,

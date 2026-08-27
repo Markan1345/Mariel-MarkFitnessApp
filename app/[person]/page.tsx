@@ -9,6 +9,7 @@ import { StartWorkoutSheet } from "@/components/StartWorkoutSheet";
 import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { isPersonId, PEOPLE } from "@/lib/people";
+import { TodayStepStats } from "@/components/TodayStepStats";
 import { WorkoutProgression } from "@/components/WorkoutProgression";
 import { planForDate, workoutPlanForDate } from "@/lib/programs";
 import { workoutFromChoice, type StartChoice } from "@/lib/start";
@@ -66,6 +67,7 @@ export default function PersonHome({
             </p>
           </div>
           <WeekStrip workouts={personWorkouts} plans={state.plans} personId={personId} />
+          <TodayStepStats state={state} personId={personId} />
         </section>
 
         {active ? (

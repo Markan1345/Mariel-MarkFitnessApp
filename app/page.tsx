@@ -8,6 +8,7 @@ import { AppIcon, type AppIconName } from "@/components/AppIcon";
 import { TogetherStartSheet, type StartChoice } from "@/components/TogetherStartSheet";
 import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
+import { TodayStepStats } from "@/components/TodayStepStats";
 import { WorkoutProgression } from "@/components/WorkoutProgression";
 import { PEOPLE, PERSON_IDS } from "@/lib/people";
 import {
@@ -65,7 +66,7 @@ export default function TogetherHome() {
           {(
             [
               { href: "/plans", label: "Plan", detail: "Your week", icon: "calendar" },
-              { href: "/weight", label: "Weight", detail: "Body & lifts", icon: "scale" },
+              { href: "/weight", label: "Weight", detail: "Body, lifts & steps", icon: "scale" },
               { href: "/history", label: "History", detail: "Past lifts", icon: "history" },
               { href: "/sync", label: "Sync", detail: "Phone & desktop", icon: "spark" },
             ] as { href: string; label: string; detail: string; icon: AppIconName }[]
@@ -156,6 +157,7 @@ export default function TogetherHome() {
                   </div>
                 </div>
                 <WeekStrip workouts={workouts} plans={state.plans} personId={id} />
+                <TodayStepStats state={state} personId={id} />
                 {todayWorkout ? (
                   <WorkoutProgression
                     workouts={state.workouts}
