@@ -15,7 +15,7 @@ import {
   linkWorkouts,
   workoutsForPerson,
 } from "@/lib/store";
-import { planForDate } from "@/lib/programs";
+import { planForDate, workoutPlanForDate } from "@/lib/programs";
 import { workoutFromChoice } from "@/lib/start";
 import { workoutHref } from "@/lib/routes";
 import { groupWorkoutsByDay, workoutsThisWeek } from "@/lib/stats";
@@ -129,6 +129,7 @@ export default function TogetherHome() {
             const week = workoutsThisWeek(workouts);
             const current = live[id];
             const todayPlan = planForDate(state.plans, id, new Date());
+            const todayWorkout = workoutPlanForDate(state.plans, id, new Date());
             const latestLb = latestWeight(state.weights, id);
             return (
               <section key={id} className={`person-${id} surface-card lift-card p-4`}>
@@ -140,7 +141,11 @@ export default function TogetherHome() {
                     <div>
                       <h3 className="font-display text-2xl leading-none">{person.name}</h3>
                       <p className="mt-1 text-xs font-medium text-muted">
-                        {todayPlan ? `Today · ${todayPlan.title}` : "Plan today’s workout"}
+                        {todayPlan
+                          ? todayPlan.kind === "rest"
+                            ? "Today · Rest day"
+                            : `Today · ${todayPlan.title}`
+                          : "Plan today’s workout"}
                       </p>
                     </div>
                   </div>
@@ -149,12 +154,12 @@ export default function TogetherHome() {
                     <p className="text-[10px] font-bold tracking-wide text-muted uppercase">sessions</p>
                   </div>
                 </div>
-                <WeekStrip workouts={workouts} />
-                {todayPlan ? (
+                <WeekStrip workouts={workouts} plans={state.plans} personId={id} />
+                {todayWorkout ? (
                   <WorkoutProgression
                     workouts={state.workouts}
                     personId={id}
-                    exercises={todayPlan.exercises}
+                    exercises={todayWorkout.exercises}
                   />
                 ) : last[id] ? (
                   <WorkoutProgression

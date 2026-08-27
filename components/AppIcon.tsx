@@ -10,6 +10,7 @@ export type AppIconName =
   | "plus"
   | "scale"
   | "spark"
+  | "moon"
   | "timer"
   | "trend";
 
@@ -53,6 +54,7 @@ const paths: Record<AppIconName, ReactNode> = {
       <path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7Z" />
     </>
   ),
+  moon: <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 7 7 0 0 0 20 14.5Z" />,
   timer: (
     <>
       <circle cx="12" cy="13" r="8" />

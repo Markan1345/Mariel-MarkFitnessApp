@@ -9,7 +9,7 @@ import { StickyPersonBar } from "@/components/StickyPersonBar";
 import { WorkoutEditor } from "@/components/WorkoutEditor";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
 import { isPersonId, PEOPLE } from "@/lib/people";
-import { planForDate, plansForPerson } from "@/lib/programs";
+import { planForDate, plansForPerson, workoutPlanForDate } from "@/lib/programs";
 import { activeWorkoutForPerson, finishWorkout, linkWorkouts, workoutsForPerson } from "@/lib/store";
 import { workoutFromChoice } from "@/lib/start";
 import { useFitnessStore } from "@/lib/use-fitness-store";
@@ -115,7 +115,7 @@ function SessionPageInner() {
           <EmptyPersonStart
             personId={active}
             lastTitle={last?.title}
-            todayPlan={planForDate(state.plans, active, new Date())}
+            todayPlan={workoutPlanForDate(state.plans, active, new Date())}
             customPlans={plansForPerson(state.plans, active).slice(0, 4)}
             onStartEmpty={() => startForActive({ type: "empty" })}
             onRepeat={last ? () => startForActive({ type: "repeat", workout: last }) : undefined}

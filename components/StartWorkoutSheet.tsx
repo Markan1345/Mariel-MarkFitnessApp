@@ -1,7 +1,7 @@
 "use client";
 
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
-import { planForDate, plansForPerson } from "@/lib/programs";
+import { planForDate, plansForPerson, workoutPlanForDate } from "@/lib/programs";
 import type { StartChoice } from "@/lib/start";
 import type { CustomPlan, PersonId, Workout } from "@/lib/types";
 import { WEEKDAYS } from "@/lib/weekdays";
@@ -26,9 +26,9 @@ export function StartWorkoutSheet({
 }) {
   if (!open) return null;
   const now = new Date();
-  const todayPlan = planForDate(plans, personId, now);
+  const todayPlan = workoutPlanForDate(plans, personId, now);
   const extras = plansForPerson(plans, personId)
-    .filter((plan) => plan.id !== todayPlan?.id)
+    .filter((plan) => plan.id !== todayPlan?.id && plan.kind !== "rest" && plan.weekday !== null)
     .slice(0, 4);
 
   return (

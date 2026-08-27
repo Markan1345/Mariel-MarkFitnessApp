@@ -52,6 +52,8 @@ export interface Workout {
   pairId: string | null;
 }
 
+export type PlanKind = "workout" | "rest";
+
 export interface CustomPlan {
   id: string;
   personId: PersonId;
@@ -61,6 +63,8 @@ export interface CustomPlan {
   weekStart: string | null;
   exercises: PlannedExercise[];
   source: "custom" | "import";
+  /** workout (default) or intentional rest day. */
+  kind?: PlanKind;
   /** When set, this day follows that person's workout for the same weekday. */
   mirrorFrom?: PersonId | null;
   createdAt: string;

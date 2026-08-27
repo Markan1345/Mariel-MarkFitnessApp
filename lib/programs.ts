@@ -1,4 +1,11 @@
-import type { CustomPlan, PersonId, PlannedExercise, Weekday, WorkoutProgram } from "./types";
+import type {
+  CustomPlan,
+  PersonId,
+  PlanKind,
+  PlannedExercise,
+  Weekday,
+  WorkoutProgram,
+} from "./types";
 import { createId } from "./ids";
 import { WEEKDAYS, weekStartKey } from "./weekdays";
 
@@ -172,18 +179,29 @@ export function createPlan(input: {
   source?: CustomPlan["source"];
   weekStart?: string | null;
   mirrorFrom?: PersonId | null;
+  kind?: PlanKind;
 }): CustomPlan {
+  const kind: PlanKind = input.kind === "rest" ? "rest" : "workout";
   return {
     id: createId("plan"),
     personId: input.personId,
-    title: input.title,
+    title: kind === "rest" ? input.title || "Rest" : input.title,
     weekday: input.weekday,
     weekStart: input.weekStart ?? null,
-    exercises: input.exercises,
+    exercises: kind === "rest" ? [] : input.exercises,
     source: input.source ?? "custom",
-    mirrorFrom: input.mirrorFrom ?? null,
+    kind,
+    mirrorFrom: kind === "rest" ? null : (input.mirrorFrom ?? null),
     createdAt: new Date().toISOString(),
   };
+}
+
+export function isRestPlan(plan: CustomPlan | null | undefined): boolean {
+  return plan?.kind === "rest";
+}
+
+export function isWorkoutPlan(plan: CustomPlan | null | undefined): boolean {
+  return Boolean(plan) && !isRestPlan(plan);
 }
 
 export function plansForPerson(plans: CustomPlan[], personId: PersonId): CustomPlan[] {
@@ -223,7 +241,8 @@ export function resolveMirroredPlan(plans: CustomPlan[], plan: CustomPlan): Cust
   return {
     ...plan,
     title: source.title,
-    exercises: source.exercises.map((exercise) => ({ ...exercise })),
+    kind: source.kind === "rest" ? "rest" : "workout",
+    exercises: source.kind === "rest" ? [] : source.exercises.map((exercise) => ({ ...exercise })),
   };
 }
 
@@ -245,6 +264,42 @@ export function planForDate(
   const weekday = date.getDay();
   if (!isWeekday(weekday)) return undefined;
   return planForWeekday(plans, personId, weekday, weekStartKey(date));
+}
+
+/** Plan for starting a session — ignores intentional rest days. */
+export function workoutPlanForDate(
+  plans: CustomPlan[],
+  personId: PersonId,
+  date: Date,
+): CustomPlan | undefined {
+  const plan = planForDate(plans, personId, date);
+  return isWorkoutPlan(plan) ? plan : undefined;
+}
+
+export function setDayRest(
+  plans: CustomPlan[],
+  input: {
+    personId: PersonId;
+    weekday: Weekday;
+    weekStart: string | null;
+    alsoUsual?: boolean;
+  },
+): CustomPlan[] {
+  const existing = ownedPlanForWeekday(plans, input.personId, input.weekday, input.weekStart);
+  const rest = createPlan({
+    personId: input.personId,
+    title: "Rest",
+    weekday: input.weekday,
+    weekStart: input.weekStart,
+    exercises: [],
+    kind: "rest",
+    mirrorFrom: null,
+    source: "custom",
+  });
+  const withId = existing
+    ? { ...rest, id: existing.id, createdAt: existing.createdAt }
+    : rest;
+  return savePlanForWeek(plans, withId, input.alsoUsual ?? false);
 }
 
 export function setDayMirror(
@@ -313,6 +368,7 @@ export function copyPlanFromPerson(
     weekStart: input.weekStart,
     exercises: source.exercises.map((exercise) => ({ ...exercise })),
     mirrorFrom: null,
+    kind: source.kind === "rest" ? "rest" : "workout",
     source: "custom",
   });
   const withId = existing
@@ -363,6 +419,7 @@ export function savePlanForWeek(
           title: plan.title,
           exercises: plan.exercises.map((exercise) => ({ ...exercise })),
           mirrorFrom: plan.mirrorFrom,
+          kind: plan.kind === "rest" ? "rest" : "workout",
         }
       : createPlan({
           personId: plan.personId,
@@ -372,6 +429,7 @@ export function savePlanForWeek(
           exercises: plan.exercises.map((exercise) => ({ ...exercise })),
           source: plan.source,
           mirrorFrom: plan.mirrorFrom,
+          kind: plan.kind === "rest" ? "rest" : "workout",
         }),
   );
 }
@@ -398,14 +456,15 @@ export function copyWeekPlans(
       next,
       createPlan({
         personId,
-        title: source.mirrorFrom ? source.title : source.title,
+        title: source.title,
         weekday: day.id,
         weekStart: toWeekStart,
-        exercises: source.mirrorFrom
+        exercises: source.mirrorFrom || source.kind === "rest"
           ? []
           : source.exercises.map((exercise) => ({ ...exercise })),
         source: "custom",
         mirrorFrom: source.mirrorFrom,
+        kind: source.kind === "rest" ? "rest" : "workout",
       }),
     );
   }

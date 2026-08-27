@@ -10,7 +10,7 @@ import { WeekStrip } from "@/components/WeekStrip";
 import { WorkoutCard } from "@/components/WorkoutCard";
 import { isPersonId, PEOPLE } from "@/lib/people";
 import { WorkoutProgression } from "@/components/WorkoutProgression";
-import { planForDate } from "@/lib/programs";
+import { planForDate, workoutPlanForDate } from "@/lib/programs";
 import { workoutFromChoice, type StartChoice } from "@/lib/start";
 import { activeWorkoutForPerson, linkWorkouts, workoutsForPerson } from "@/lib/store";
 import { greeting, workoutsThisWeek } from "@/lib/stats";
@@ -35,6 +35,7 @@ export default function PersonHome({
   const lastFinished = recent[0];
 
   const todayPlan = planForDate(state.plans, personId, new Date());
+  const todayWorkout = workoutPlanForDate(state.plans, personId, new Date());
   const latestLb = latestWeight(state.weights, personId);
 
   function saveNew(choice: StartChoice) {
@@ -64,7 +65,7 @@ export default function PersonHome({
               {latestLb ? ` · ${latestLb.pounds} lb` : ""}
             </p>
           </div>
-          <WeekStrip workouts={personWorkouts} />
+          <WeekStrip workouts={personWorkouts} plans={state.plans} personId={personId} />
         </section>
 
         {active ? (
@@ -86,19 +87,24 @@ export default function PersonHome({
             >
               Start workout
             </button>
-            {todayPlan ? (
+            {todayPlan?.kind === "rest" ? (
+              <div className="rounded-3xl border border-line bg-paper px-4 py-3 text-center">
+                <p className="font-medium">Rest day</p>
+                <p className="mt-1 text-xs text-muted">Planned recovery — no session scheduled.</p>
+              </div>
+            ) : todayWorkout ? (
               <>
                 <button
                   type="button"
-                  onClick={() => saveNew({ type: "plan", plan: todayPlan })}
+                  onClick={() => saveNew({ type: "plan", plan: todayWorkout })}
                   className="w-full rounded-3xl border border-line bg-paper py-3 font-medium"
                 >
-                  Start today · {todayPlan.title}
+                  Start today · {todayWorkout.title}
                 </button>
                 <WorkoutProgression
                   workouts={state.workouts}
                   personId={personId}
-                  exercises={todayPlan.exercises}
+                  exercises={todayWorkout.exercises}
                 />
               </>
             ) : lastFinished ? (
