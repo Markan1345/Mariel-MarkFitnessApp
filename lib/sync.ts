@@ -1,7 +1,7 @@
 import type { AppState, CustomPlan, WeightEntry, Workout } from "./types";
 import { emptyState, isAppState, parseState } from "./store";
 import { decryptPayload, encryptPayload } from "./sync-crypto";
-import { createCloudBin, readCloudBin, writeCloudBin } from "./sync-cloud";
+import { loadLatestSnapshot, publishSnapshot } from "./sync-cloud";
 
 export const SYNC_META_KEY = "mm-fitness-sync-v1";
 export const SYNC_CODE_PREFIX = "LT1";
@@ -16,6 +16,7 @@ export type SyncEnvelope = {
 };
 
 export type SyncMeta = {
+  /** Last published snapshot id (debug / UI only). */
   binId: string;
   passphrase: string;
   deviceId: string;
@@ -35,20 +36,24 @@ export function createDeviceId(): string {
   return `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function createPassphrase(length = 8): string {
+export function createPassphrase(length = 16): string {
   const bytes = crypto.getRandomValues(new Uint8Array(length));
   return Array.from(bytes, (byte) => PASS_ALPHABET[byte % PASS_ALPHABET.length]).join("");
 }
 
-export function formatSyncCode(binId: string, passphrase: string): string {
-  return `${SYNC_CODE_PREFIX}-${binId}-${passphrase}`.toUpperCase();
+export function formatSyncCode(passphrase: string): string {
+  return `${SYNC_CODE_PREFIX}-${passphrase}`.toUpperCase();
 }
 
-export function parseSyncCode(raw: string): { binId: string; passphrase: string } | null {
+export function parseSyncCode(raw: string): { passphrase: string } | null {
   const cleaned = raw.trim().toUpperCase().replace(/\s+/g, "");
-  const match = cleaned.match(/^LT1-([A-Z0-9]+)-([A-Z0-9]{6,32})$/);
-  if (!match) return null;
-  return { binId: match[1].toLowerCase(), passphrase: match[2] };
+  // Current format: LT1-XXXXXXXXXXXXXXXX
+  const modern = cleaned.match(/^LT1-([A-Z0-9]{12,32})$/);
+  if (modern) return { passphrase: modern[1] };
+  // Legacy format from earlier draft: LT1-{binId}-{passphrase}
+  const legacy = cleaned.match(/^LT1-[A-Z0-9]+-([A-Z0-9]{12,32})$/);
+  if (legacy) return { passphrase: legacy[1] };
+  return null;
 }
 
 export function isSyncEnvelope(value: unknown): value is SyncEnvelope {
@@ -190,7 +195,7 @@ export async function createSyncRoom(state: AppState, deviceId: string): Promise
   const passphrase = createPassphrase();
   const envelope = buildEnvelope({ state, deviceId, removedIds: [] });
   const payload = await packEnvelope(passphrase, envelope);
-  const binId = await createCloudBin(passphrase, {
+  const binId = await publishSnapshot(passphrase, {
     app: "lifting-together",
     payload,
   });
@@ -201,27 +206,23 @@ export async function createSyncRoom(state: AppState, deviceId: string): Promise
       deviceId,
       lastSyncedAt: envelope.updatedAt,
     },
-    code: formatSyncCode(binId, passphrase),
+    code: formatSyncCode(passphrase),
     envelope,
   };
 }
 
-export async function fetchRemoteEnvelope(
-  binId: string,
-  passphrase: string,
-): Promise<SyncEnvelope | null> {
-  const body = await readCloudBin(binId);
-  if (!body) return null;
-  return unpackEnvelope(passphrase, body.payload);
+export async function fetchRemoteEnvelope(passphrase: string): Promise<SyncEnvelope | null> {
+  const latest = await loadLatestSnapshot(passphrase);
+  if (!latest) return null;
+  return unpackEnvelope(passphrase, latest.body.payload);
 }
 
 export async function pushEnvelope(
-  binId: string,
   passphrase: string,
   envelope: SyncEnvelope,
-): Promise<void> {
+): Promise<string> {
   const payload = await packEnvelope(passphrase, envelope);
-  await writeCloudBin(binId, passphrase, {
+  return publishSnapshot(passphrase, {
     app: "lifting-together",
     payload,
   });
@@ -243,9 +244,9 @@ export function parseSyncMeta(raw: string | null): SyncMeta | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<SyncMeta>;
-    if (!parsed.binId || !parsed.passphrase || !parsed.deviceId) return null;
+    if (!parsed.passphrase || !parsed.deviceId) return null;
     return {
-      binId: parsed.binId,
+      binId: parsed.binId ?? "",
       passphrase: parsed.passphrase,
       deviceId: parsed.deviceId,
       lastSyncedAt: parsed.lastSyncedAt ?? null,

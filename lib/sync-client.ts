@@ -84,13 +84,13 @@ function patchMeta(patch: Partial<SyncMeta>) {
 
 export function getSyncCode(): string | null {
   const meta = readSyncMeta();
-  if (!meta?.binId || !meta.passphrase) return null;
-  return formatSyncCode(meta.binId, meta.passphrase);
+  if (!meta?.passphrase) return null;
+  return formatSyncCode(meta.passphrase);
 }
 
 export function isSyncLinked(): boolean {
   const meta = readSyncMeta();
-  return Boolean(meta?.binId && meta.passphrase);
+  return Boolean(meta?.passphrase);
 }
 
 export function subscribeToSyncMeta(onChange: () => void) {
@@ -116,7 +116,15 @@ async function runExclusive(task: () => Promise<void>) {
 export async function createHouseholdSync(): Promise<string> {
   const deviceId = readSyncMeta()?.deviceId ?? createDeviceId();
   const state = readState();
-  patchMeta({ lastStatus: "syncing", lastError: null });
+  writeSyncMeta({
+    binId: "",
+    passphrase: "",
+    deviceId,
+    lastSyncedAt: null,
+    lastStatus: "syncing",
+    lastError: null,
+    lastSyncedLabel: null,
+  });
   try {
     const { meta, code } = await createSyncRoom(state, deviceId);
     writeRemovedIds([]);
@@ -145,11 +153,11 @@ export async function createHouseholdSync(): Promise<string> {
 export async function joinHouseholdSync(code: string): Promise<void> {
   const parsed = parseSyncCode(code);
   if (!parsed) {
-    throw new Error("Use a code like LT1-abc1234-K7M2P9QX");
+    throw new Error("Use a code like LT1-K7M2P9QXH4W8N3YT");
   }
   const deviceId = readSyncMeta()?.deviceId ?? createDeviceId();
   writeSyncMeta({
-    binId: parsed.binId,
+    binId: "",
     passphrase: parsed.passphrase,
     deviceId,
     lastSyncedAt: null,
@@ -159,7 +167,7 @@ export async function joinHouseholdSync(code: string): Promise<void> {
   });
 
   try {
-    const remote = await fetchRemoteEnvelope(parsed.binId, parsed.passphrase);
+    const remote = await fetchRemoteEnvelope(parsed.passphrase);
     if (!remote) throw new Error("No sync room found for that code");
     const local = readState();
     const preferRemote =
@@ -172,15 +180,14 @@ export async function joinHouseholdSync(code: string): Promise<void> {
     });
     writeRemovedIds(merged.removedIds);
     writeState(merged.state, { fromSync: true });
-    // If this device had local data, push the merge so the room keeps everything.
     const envelope = buildEnvelope({
       state: merged.state,
       deviceId,
       removedIds: merged.removedIds,
     });
-    await pushEnvelope(parsed.binId, parsed.passphrase, envelope);
+    const binId = await pushEnvelope(parsed.passphrase, envelope);
     writeSyncMeta({
-      binId: parsed.binId,
+      binId,
       passphrase: parsed.passphrase,
       deviceId,
       lastSyncedAt: envelope.updatedAt,
@@ -209,7 +216,7 @@ export function unlinkHouseholdSync() {
 
 export async function syncNow(options?: { preferRemote?: boolean }): Promise<AppState> {
   const meta = readSyncMeta();
-  if (!meta?.binId || !meta.passphrase) {
+  if (!meta?.passphrase) {
     throw new Error("Sync is not linked on this device");
   }
 
@@ -217,7 +224,7 @@ export async function syncNow(options?: { preferRemote?: boolean }): Promise<App
   await runExclusive(async () => {
     patchMeta({ lastStatus: "syncing", lastError: null });
     try {
-      const remote = await fetchRemoteEnvelope(meta.binId, meta.passphrase);
+      const remote = await fetchRemoteEnvelope(meta.passphrase);
       const local = readState();
       let removedIds = readRemovedIds();
       let preferRemote = options?.preferRemote ?? false;
@@ -243,9 +250,10 @@ export async function syncNow(options?: { preferRemote?: boolean }): Promise<App
         deviceId: meta.deviceId,
         removedIds,
       });
-      await pushEnvelope(meta.binId, meta.passphrase, envelope);
+      const binId = await pushEnvelope(meta.passphrase, envelope);
       writeSyncMeta({
         ...meta,
+        binId,
         lastSyncedAt: envelope.updatedAt,
         lastStatus: "synced",
         lastError: null,

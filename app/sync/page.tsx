@@ -28,7 +28,7 @@ function getServerMetaSnapshot() {
 export default function SyncPage() {
   const rawMeta = useSyncExternalStore(subscribeToSyncMeta, getMetaSnapshot, getServerMetaSnapshot);
   const meta = useMemo(() => (rawMeta === "null" ? null : JSON.parse(rawMeta)), [rawMeta]);
-  const linked = Boolean(meta?.binId && meta?.passphrase);
+  const linked = Boolean(meta?.passphrase);
   const code = linked ? getSyncCode() : null;
 
   const [joinCode, setJoinCode] = useState("");
@@ -58,7 +58,7 @@ export default function SyncPage() {
     setMessage("");
     try {
       if (!parseSyncCode(joinCode)) {
-        throw new Error("Use a code like LT1-abc1234-K7M2P9QX");
+        throw new Error("Use a code like LT1-K7M2P9QXH4W8N3YT");
       }
       await joinHouseholdSync(joinCode);
       setMessage("This device is linked. Workouts will stay in sync.");
@@ -231,7 +231,7 @@ export default function SyncPage() {
           <input
             value={joinCode}
             onChange={(event) => setJoinCode(event.target.value)}
-            placeholder="LT1-……-……"
+            placeholder="LT1-………………"
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}

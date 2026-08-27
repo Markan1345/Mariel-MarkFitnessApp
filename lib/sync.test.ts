@@ -13,12 +13,14 @@ import { createWeightEntry } from "@/lib/weight";
 
 describe("sync codes", () => {
   it("formats and parses household codes", () => {
-    const code = formatSyncCode("ab12cd3", "K7M2P9QX");
-    expect(code).toBe("LT1-AB12CD3-K7M2P9QX");
-    expect(parseSyncCode(code)).toEqual({ binId: "ab12cd3", passphrase: "K7M2P9QX" });
-    expect(parseSyncCode("  lt1-ab12cd3-k7m2p9qx  ")).toEqual({
-      binId: "ab12cd3",
-      passphrase: "K7M2P9QX",
+    const code = formatSyncCode("K7M2P9QXH4W8N3YT");
+    expect(code).toBe("LT1-K7M2P9QXH4W8N3YT");
+    expect(parseSyncCode(code)).toEqual({ passphrase: "K7M2P9QXH4W8N3YT" });
+    expect(parseSyncCode("  lt1-k7m2p9qxh4w8n3yt  ")).toEqual({
+      passphrase: "K7M2P9QXH4W8N3YT",
+    });
+    expect(parseSyncCode("LT1-oldbin-K7M2P9QXH4W8N3YT")).toEqual({
+      passphrase: "K7M2P9QXH4W8N3YT",
     });
     expect(parseSyncCode("nope")).toBeNull();
   });
