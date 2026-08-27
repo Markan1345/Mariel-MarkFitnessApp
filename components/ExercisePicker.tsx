@@ -34,38 +34,40 @@ export function ExercisePicker({
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/55 p-3 backdrop-blur-sm sm:items-center">
-      <div className="surface-card flex max-h-[85svh] w-full max-w-[430px] flex-col p-4 shadow-2xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="eyebrow">Exercise library</p>
-            <h2 className="font-display text-2xl">Add a movement</h2>
+      <div className="surface-card flex h-[min(85svh,720px)] w-full max-w-[430px] flex-col overflow-hidden p-4 shadow-2xl">
+        <div className="shrink-0 border-b border-line/70 bg-[color-mix(in_srgb,var(--paper)_96%,transparent)] pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="eyebrow">Exercise library</p>
+              <h2 className="font-display text-2xl">Add a movement</h2>
+            </div>
+            <button type="button" onClick={onClose} className="text-sm text-muted">
+              Close
+            </button>
           </div>
-          <button type="button" onClick={onClose} className="text-sm text-muted">
-            Close
-          </button>
-        </div>
-        <input
-          autoFocus
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search lift, cardio, or type a custom name"
-          className="input-shell mt-3 h-11 px-4"
-        />
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          <FilterChip active={group === "all"} onClick={() => setGroup("all")}>
-            All
-          </FilterChip>
-          {MUSCLE_GROUPS.map((item) => (
-            <FilterChip
-              key={item.id}
-              active={group === item.id}
-              onClick={() => setGroup(item.id)}
-            >
-              {item.label}
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search lift, cardio, or type a custom name"
+            className="input-shell mt-3 h-11 px-4"
+          />
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            <FilterChip active={group === "all"} onClick={() => setGroup("all")}>
+              All
             </FilterChip>
-          ))}
+            {MUSCLE_GROUPS.map((item) => (
+              <FilterChip
+                key={item.id}
+                active={group === item.id}
+                onClick={() => setGroup(item.id)}
+              >
+                {item.label}
+              </FilterChip>
+            ))}
+          </div>
         </div>
-        <div className="mt-3 overflow-y-auto">
+        <div className="mt-1 min-h-0 flex-1 overflow-y-auto pt-2">
           {query.trim() && !results.some((item) => item.name.toLowerCase() === query.trim().toLowerCase()) ? (
             <div className="mb-2 grid gap-2">
               <button
@@ -83,6 +85,9 @@ export function ExercisePicker({
                 Use “{query.trim()}” as cardio
               </button>
             </div>
+          ) : null}
+          {results.length === 0 && !query.trim() ? (
+            <p className="px-1 py-6 text-center text-sm text-muted">No exercises in this group.</p>
           ) : null}
           {results.map((exercise) => (
             <button
