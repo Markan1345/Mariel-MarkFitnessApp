@@ -9,6 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { AppIcon } from "./AppIcon";
 import { indexFromPointerY } from "@/lib/reorder";
 
@@ -16,9 +17,13 @@ type DragState = {
   id: string;
   fromIndex: number;
   overIndex: number;
+  pointerId: number;
   originY: number;
   offsetY: number;
+  width: number;
   height: number;
+  left: number;
+  top: number;
 };
 
 export type DragHandleProps = {
@@ -51,7 +56,7 @@ export function SortableList<T>({
   renderItem: (item: T, index: number, handle: DragHandleProps) => ReactNode;
   className?: string;
 }) {
-  const itemRefs = useRef(new Map<string, HTMLDivElement | null>());
+  const slotRefs = useRef(new Map<number, HTMLDivElement | null>());
   const itemsRef = useRef(items);
   const getIdRef = useRef(getId);
   const onReorderRef = useRef(onReorder);
@@ -63,9 +68,9 @@ export function SortableList<T>({
   getIdRef.current = getId;
   onReorderRef.current = onReorder;
 
-  const setItemRef = useCallback((id: string, node: HTMLDivElement | null) => {
-    if (node) itemRefs.current.set(id, node);
-    else itemRefs.current.delete(id);
+  const setSlotRef = useCallback((index: number, node: HTMLDivElement | null) => {
+    if (node) slotRefs.current.set(index, node);
+    else slotRefs.current.delete(index);
   }, []);
 
   useEffect(() => {
@@ -75,20 +80,23 @@ export function SortableList<T>({
   useEffect(() => {
     if (!draggingId) return;
 
-    function onPointerMove(event: PointerEvent) {
-      const current = dragRef.current;
-      if (!current) return;
+    function slotRects(): { tops: number[]; heights: number[] } {
       const tops: number[] = [];
       const heights: number[] = [];
-      for (const item of itemsRef.current) {
-        const id = getIdRef.current(item);
-        const node = itemRefs.current.get(id);
+      for (let index = 0; index < itemsRef.current.length; index += 1) {
+        const node = slotRefs.current.get(index);
         if (!node) continue;
         const rect = node.getBoundingClientRect();
-        const shift = Number(node.dataset.shiftY || 0);
-        tops.push(rect.top - shift);
+        tops.push(rect.top);
         heights.push(rect.height);
       }
+      return { tops, heights };
+    }
+
+    function onPointerMove(event: PointerEvent) {
+      const current = dragRef.current;
+      if (!current || event.pointerId !== current.pointerId) return;
+      const { tops, heights } = slotRects();
       const overIndex = indexFromPointerY(event.clientY, tops, heights);
       const next: DragState = {
         ...current,
@@ -110,11 +118,13 @@ export function SortableList<T>({
       }
     }
 
-    function onPointerUp() {
+    function onPointerUp(event: PointerEvent) {
+      if (dragRef.current?.pointerId !== event.pointerId) return;
       finish(true);
     }
 
-    function onPointerCancel() {
+    function onPointerCancel(event: PointerEvent) {
+      if (dragRef.current?.pointerId !== event.pointerId) return;
       finish(false);
     }
 
@@ -136,69 +146,83 @@ export function SortableList<T>({
     if (event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
-    const node = itemRefs.current.get(id);
-    const height = node?.getBoundingClientRect().height ?? 0;
+    const node = slotRefs.current.get(index);
+    const rect = node?.getBoundingClientRect();
+    if (!rect) return;
     const next: DragState = {
       id,
       fromIndex: index,
       overIndex: index,
+      pointerId: event.pointerId,
       originY: event.clientY,
       offsetY: 0,
-      height,
+      width: rect.width,
+      height: rect.height,
+      left: rect.left,
+      top: rect.top,
     };
     dragRef.current = next;
     setDrag(next);
   }
 
-  function shiftForIndex(index: number): number {
-    if (!drag) return 0;
-    const { fromIndex, overIndex, height } = drag;
-    if (index === fromIndex) return 0;
-    if (fromIndex < overIndex && index > fromIndex && index <= overIndex) {
-      return -height - 12;
-    }
-    if (fromIndex > overIndex && index >= overIndex && index < fromIndex) {
-      return height + 12;
-    }
-    return 0;
-  }
+  const noopHandle: DragHandleProps = {
+    onPointerDown: (event) => {
+      event.preventDefault();
+    },
+  };
+
+  const draggedItem =
+    drag === null
+      ? null
+      : items.find((item, index) => getId(item) === drag.id && index === drag.fromIndex);
+
+  const previewStyle: CSSProperties | undefined = drag
+    ? {
+        position: "fixed",
+        left: drag.left,
+        top: drag.top + drag.offsetY,
+        width: drag.width,
+        zIndex: 60,
+        pointerEvents: "none",
+        boxShadow: "0 18px 40px rgba(39, 27, 18, 0.2)",
+        transform: "scale(1.02)",
+      }
+    : undefined;
 
   return (
-    <div className={className}>
-      {items.map((item, index) => {
-        const id = getId(item);
-        const isDragging = drag?.id === id;
-        const shiftY = shiftForIndex(index);
-        const style: CSSProperties = isDragging
-          ? {
-              transform: `translateY(${drag.offsetY}px) scale(1.02)`,
-              zIndex: 20,
-              position: "relative",
-              boxShadow: "0 18px 40px rgba(39, 27, 18, 0.18)",
-              opacity: 0.96,
-              transition: "box-shadow 120ms ease",
-            }
-          : {
-              transform: shiftY ? `translateY(${shiftY}px)` : undefined,
-              transition: drag ? "transform 140ms ease" : undefined,
-              position: "relative",
-              zIndex: 1,
-            };
+    <>
+      <div className={className}>
+        {items.map((item, index) => {
+          const id = getId(item);
+          const isSourceSlot = drag?.fromIndex === index;
 
-        return (
-          <div
-            key={id}
-            ref={(node) => setItemRef(id, node)}
-            data-shift-y={shiftY}
-            style={style}
-            className={isDragging ? "pointer-events-none" : undefined}
-          >
-            {renderItem(item, index, {
-              onPointerDown: (event) => startDrag(id, index, event),
-            })}
-          </div>
-        );
-      })}
-    </div>
+          if (isSourceSlot) {
+            return (
+              <div
+                key={id}
+                ref={(node) => setSlotRef(index, node)}
+                aria-hidden
+                className="rounded-[1.25rem] border-2 border-dashed border-line/70 bg-bg/40"
+                style={{ minHeight: drag?.height }}
+              />
+            );
+          }
+
+          return (
+            <div key={id} ref={(node) => setSlotRef(index, node)}>
+              {renderItem(item, index, {
+                onPointerDown: (event) => startDrag(id, index, event),
+              })}
+            </div>
+          );
+        })}
+      </div>
+      {drag && draggedItem && typeof document !== "undefined"
+        ? createPortal(
+            <div style={previewStyle}>{renderItem(draggedItem, drag.fromIndex, noopHandle)}</div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
