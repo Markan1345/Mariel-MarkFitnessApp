@@ -4,7 +4,9 @@ A shared mobile website for two people. Log both sessions at the same time, incl
 
 **Live site:** [https://markan1345.github.io/Mariel-MarkFitnessApp/](https://markan1345.github.io/Mariel-MarkFitnessApp/)
 
-Open that link on your phones. Add it to the home screen for a full-screen app. Data stays in that phone’s browser (`localStorage`).
+Open that link on your phones or desktop. Add it to the home screen for a full-screen app.
+
+Data is saved in the browser and can **sync across devices**. Open **Sync**, create a household on one device, then enter the same code on your other phone or computer. Changes push automatically and pull when you reopen the app.
 
 ## What you can do
 
@@ -14,6 +16,7 @@ Open that link on your phones. Add it to the home screen for a full-screen app. 
 - Track cardio with minutes, miles, and intensity
 - See **estimated calories** from lifts and cardio (uses the latest body weight in lb)
 - Log **body weight in pounds**, view it by date, and follow the trend
+- **Sync phone and desktop** with a shared household code (plus optional JSON backup)
 
 ## Run it locally
 

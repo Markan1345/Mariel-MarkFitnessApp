@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Outfit } from "next/font/google";
+import { SyncBootstrap } from "@/components/SyncBootstrap";
 import { SITE_BASE_PATH } from "@/lib/site";
 import "./globals.css";
 
@@ -47,7 +48,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.variable} ${fraunces.variable} antialiased`}>
-        <div className="phone-shell">{children}</div>
+        <div className="phone-shell">
+          <SyncBootstrap />
+          {children}
+        </div>
       </body>
     </html>
   );
