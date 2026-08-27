@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { NumberStepper } from "./NumberStepper";
 import { AppIcon } from "./AppIcon";
 import { estimateExerciseCalories, formatCalories } from "@/lib/calories";
@@ -10,11 +11,13 @@ const INTENSITIES: CardioIntensity[] = ["easy", "moderate", "hard"];
 export function CardioBlock({
   exercise,
   bodyWeightLb,
+  dragHandle,
   onChange,
   onRemove,
 }: {
   exercise: ExerciseEntry;
   bodyWeightLb: number;
+  dragHandle?: ReactNode;
   onChange: (exercise: ExerciseEntry) => void;
   onRemove: () => void;
 }) {
@@ -28,16 +31,17 @@ export function CardioBlock({
   return (
     <section className="surface-card p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {dragHandle}
           <span className="accent-soft accent-text grid h-10 w-10 shrink-0 place-items-center rounded-2xl">
             <AppIcon name="activity" className="h-5 w-5" />
           </span>
-          <div>
+          <div className="min-w-0">
             <p className="eyebrow">Cardio</p>
             <h3 className="font-display text-2xl leading-tight">{exercise.name}</h3>
           </div>
         </div>
-        <button type="button" onClick={onRemove} className="text-xs text-muted">
+        <button type="button" onClick={onRemove} className="shrink-0 text-xs text-muted">
           Remove
         </button>
       </div>

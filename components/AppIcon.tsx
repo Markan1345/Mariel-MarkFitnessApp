@@ -5,6 +5,7 @@ export type AppIconName =
   | "calendar"
   | "chevron-right"
   | "dumbbell"
+  | "grip"
   | "history"
   | "home"
   | "plus"
@@ -16,6 +17,16 @@ export type AppIconName =
 
 const paths: Record<AppIconName, ReactNode> = {
   activity: <path d="M3 12h4l2.2-6 4 12 2.3-6H21" />,
+  grip: (
+    <>
+      <circle cx="9" cy="7" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="12" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="17" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="7" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="12" r="1.35" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="17" r="1.35" fill="currentColor" stroke="none" />
+    </>
+  ),
   calendar: (
     <>
       <rect x="3" y="5" width="18" height="16" rx="3" />

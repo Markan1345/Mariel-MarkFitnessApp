@@ -5,6 +5,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { AppNav } from "@/components/AppNav";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { PersonTabs } from "@/components/PersonTabs";
+import { DragHandle, SortableList } from "@/components/SortableList";
 import { StickyPersonBar } from "@/components/StickyPersonBar";
 import { PEOPLE } from "@/lib/people";
 import {
@@ -22,6 +23,8 @@ import {
   setDayMirror,
   setDayRest,
 } from "@/lib/programs";
+import { reorderList } from "@/lib/reorder";
+import { createId } from "@/lib/ids";
 import { useFitnessStore } from "@/lib/use-fitness-store";
 import {
   WEEKDAYS,
@@ -440,6 +443,7 @@ export default function PlansPage() {
       <AppNav />
       {builderOpen && editing ? (
         <PlanBuilder
+          key={editing.id}
           plan={editing}
           alsoUsual={alsoUsual}
           weekLabel={editing.weekStart ? formatWeekRange(selectedWeekStartDate) : null}
@@ -485,6 +489,9 @@ function PlanBuilder({
   const [draft, setDraft] = useState(plan);
   const [useEveryWeek, setUseEveryWeek] = useState(alsoUsual);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [exerciseKeys, setExerciseKeys] = useState<string[]>(() =>
+    plan.exercises.map(() => createId("mv")),
+  );
   const weekdayOptions = useMemo(() => [{ id: -1, label: "No specific day" }, ...WEEKDAYS], []);
   const canMirrorMark =
     draft.personId === "mariel" &&
@@ -508,6 +515,23 @@ function PlanBuilder({
       mirrorFrom: null,
       exercises: [...current.exercises, next],
     }));
+    setExerciseKeys((keys) => [...keys, createId("mv")]);
+  }
+
+  function removeMove(index: number) {
+    setDraft((current) => ({
+      ...current,
+      exercises: current.exercises.filter((_, itemIndex) => itemIndex !== index),
+    }));
+    setExerciseKeys((keys) => keys.filter((_, itemIndex) => itemIndex !== index));
+  }
+
+  function reorderMoves(fromIndex: number, toIndex: number) {
+    setDraft((current) => ({
+      ...current,
+      exercises: reorderList(current.exercises, fromIndex, toIndex),
+    }));
+    setExerciseKeys((keys) => reorderList(keys, fromIndex, toIndex));
   }
 
   function enableMirror() {
@@ -522,14 +546,15 @@ function PlanBuilder({
   }
 
   function stopMirror({ keepExercises }: { keepExercises: boolean }) {
+    const copied =
+      keepExercises && partnerPlan && partnerPlan.kind !== "rest"
+        ? partnerPlan.exercises.map((exercise) => ({ ...exercise }))
+        : [];
     setDraft({
       ...draft,
       mirrorFrom: null,
       kind: keepExercises && partnerPlan?.kind === "rest" ? "rest" : "workout",
-      exercises:
-        keepExercises && partnerPlan && partnerPlan.kind !== "rest"
-          ? partnerPlan.exercises.map((exercise) => ({ ...exercise }))
-          : [],
+      exercises: copied,
       title:
         keepExercises && partnerPlan
           ? partnerPlan.title
@@ -537,6 +562,7 @@ function PlanBuilder({
             ? "Rest"
             : draft.title,
     });
+    setExerciseKeys(copied.map(() => createId("mv")));
   }
 
   function markRest() {
@@ -547,6 +573,7 @@ function PlanBuilder({
       exercises: [],
       mirrorFrom: null,
     });
+    setExerciseKeys([]);
   }
 
   function clearRest() {
@@ -556,6 +583,7 @@ function PlanBuilder({
       title: draft.weekday !== null ? `${WEEKDAYS[draft.weekday].label} workout` : "Custom workout",
       exercises: [],
     });
+    setExerciseKeys([]);
   }
 
   return (
@@ -687,37 +715,62 @@ function PlanBuilder({
                 Counts in your week as planned recovery — not an open day.
               </p>
             </div>
-          ) : displayExercises.length === 0 ? (
-            <p className="text-sm text-muted">
-              {mirroring ? "Mark has no moves on this day yet." : "Add lifts and cardio for this day."}
-            </p>
+          ) : mirroring ? (
+            displayExercises.length === 0 ? (
+              <p className="text-sm text-muted">Mark has no moves on this day yet.</p>
+            ) : (
+              <ul className="grid gap-2">
+                {displayExercises.map((exercise, index) => (
+                  <li
+                    key={`${exercise.name}-${index}`}
+                    className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2.5"
+                  >
+                    <span className="font-bold">
+                      {exercise.name}
+                      <span className="ml-2 text-xs uppercase text-muted">{exercise.kind}</span>
+                    </span>
+                    <span className="text-[10px] font-bold tracking-wide text-muted uppercase">
+                      From Mark
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : draft.exercises.length === 0 ? (
+            <p className="text-sm text-muted">Add lifts and cardio for this day.</p>
           ) : (
-            <ul className="grid gap-2">
-              {displayExercises.map((exercise, index) => (
-                <li key={`${exercise.name}-${index}`} className="flex items-center justify-between rounded-2xl bg-bg px-3 py-2.5">
-                  <span className="font-bold">
-                    {exercise.name}
-                    <span className="ml-2 text-xs uppercase text-muted">{exercise.kind}</span>
-                  </span>
-                  {!mirroring ? (
+            <>
+              <p className="mb-2 text-xs font-bold tracking-wide text-muted uppercase">
+                Drag the handle to reorder
+              </p>
+              <SortableList
+                className="grid gap-2"
+                items={draft.exercises.map((exercise, index) => ({
+                  exercise,
+                  key: exerciseKeys[index] ?? createId("mv"),
+                }))}
+                getId={(item) => item.key}
+                onReorder={reorderMoves}
+                renderItem={({ exercise }, index, handle) => (
+                  <div className="flex items-center justify-between gap-2 rounded-2xl bg-bg px-2 py-2.5">
+                    <div className="flex min-w-0 items-center gap-1">
+                      <DragHandle {...handle} />
+                      <span className="font-bold">
+                        {exercise.name}
+                        <span className="ml-2 text-xs uppercase text-muted">{exercise.kind}</span>
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      className="text-xs text-muted"
-                      onClick={() =>
-                        setDraft({
-                          ...draft,
-                          exercises: draft.exercises.filter((_, itemIndex) => itemIndex !== index),
-                        })
-                      }
+                      className="shrink-0 pr-1 text-xs text-muted"
+                      onClick={() => removeMove(index)}
                     >
                       Remove
                     </button>
-                  ) : (
-                    <span className="text-[10px] font-bold tracking-wide text-muted uppercase">From Mark</span>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  </div>
+                )}
+              />
+            </>
           )}
           {!mirroring && !resting ? (
             <button

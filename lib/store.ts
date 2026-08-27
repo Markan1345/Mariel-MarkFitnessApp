@@ -11,6 +11,9 @@ import type {
 } from "./types";
 import { createId } from "./ids";
 import { kindForExercise } from "./exercises";
+import { reorderList } from "./reorder";
+
+export { reorderList } from "./reorder";
 
 export const STORAGE_KEY = "mm-fitness-v1";
 
@@ -239,6 +242,18 @@ export function removeExercise(workout: Workout, exerciseId: string): Workout {
   return {
     ...workout,
     exercises: workout.exercises.filter((exercise) => exercise.id !== exerciseId),
+  };
+}
+
+export function moveExercise(
+  workout: Workout,
+  fromIndex: number,
+  toIndex: number,
+): Workout {
+  const exercises = reorderList(workout.exercises, fromIndex, toIndex);
+  return {
+    ...workout,
+    exercises,
   };
 }
 
