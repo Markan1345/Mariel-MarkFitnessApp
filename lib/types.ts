@@ -24,6 +24,7 @@ export interface SetEntry {
 export interface CardioLog {
   minutes: number | null;
   distanceMiles: number | null;
+  steps: number | null;
   intensity: CardioIntensity;
 }
 

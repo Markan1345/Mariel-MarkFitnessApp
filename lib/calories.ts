@@ -19,6 +19,17 @@ const CARDIO_MET: Record<string, Record<CardioIntensity, number>> = {
   swimming: { easy: 5.0, moderate: 7.0, hard: 9.5 },
   hiit: { easy: 6.0, moderate: 8.5, hard: 11.0 },
   hiking: { easy: 5.0, moderate: 6.0, hard: 7.8 },
+  "basketball training": { easy: 5.0, moderate: 6.5, hard: 9.0 },
+  "basketball game": { easy: 6.5, moderate: 8.0, hard: 10.0 },
+  basketball: { easy: 5.0, moderate: 6.5, hard: 8.0 },
+  soccer: { easy: 5.0, moderate: 7.0, hard: 10.0 },
+  football: { easy: 4.5, moderate: 8.0, hard: 9.0 },
+  tennis: { easy: 4.5, moderate: 7.3, hard: 8.0 },
+  volleyball: { easy: 3.0, moderate: 4.0, hard: 6.0 },
+  pickleball: { easy: 4.0, moderate: 6.0, hard: 7.0 },
+  boxing: { easy: 5.5, moderate: 7.8, hard: 12.8 },
+  dance: { easy: 5.0, moderate: 7.3, hard: 9.0 },
+  "martial arts": { easy: 5.3, moderate: 8.0, hard: 10.3 },
 };
 
 const DEFAULT_CARDIO_MET: Record<CardioIntensity, number> = {
@@ -36,12 +47,22 @@ export function poundsToKg(pounds: number): number {
 
 export function metForCardio(name: string, intensity: CardioIntensity): number {
   const key = name.trim().toLowerCase();
-  return CARDIO_MET[key]?.[intensity] ?? DEFAULT_CARDIO_MET[intensity];
+  if (CARDIO_MET[key]) return CARDIO_MET[key][intensity];
+  const match = Object.keys(CARDIO_MET)
+    .filter((known) => key.includes(known))
+    .sort((a, b) => b.length - a.length)[0];
+  return (match ? CARDIO_MET[match] : DEFAULT_CARDIO_MET)[intensity];
 }
 
 export function caloriesFromMet(met: number, pounds: number, minutes: number): number {
   if (minutes <= 0 || pounds <= 0) return 0;
   return met * poundsToKg(pounds) * (minutes / 60);
+}
+
+/** About 0.04 kcal per step at 160 lb, scaled linearly with body weight. */
+export function caloriesFromSteps(steps: number, pounds: number): number {
+  if (steps <= 0 || pounds <= 0) return 0;
+  return steps * (pounds / 4000);
 }
 
 export function estimateExerciseCalories(
@@ -50,8 +71,12 @@ export function estimateExerciseCalories(
 ): number {
   if ((exercise.kind ?? kindForExercise(exercise.name)) === "cardio") {
     const minutes = exercise.cardio?.minutes ?? 0;
+    const steps = exercise.cardio?.steps ?? 0;
     const intensity = exercise.cardio?.intensity ?? "moderate";
-    return caloriesFromMet(metForCardio(exercise.name, intensity), pounds, minutes);
+    if (minutes > 0) {
+      return caloriesFromMet(metForCardio(exercise.name, intensity), pounds, minutes);
+    }
+    return caloriesFromSteps(steps, pounds);
   }
   const done = exercise.sets.filter((set) => set.completed).length;
   return caloriesFromMet(STRENGTH_MET, pounds, done * MINUTES_PER_SET);

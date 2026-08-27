@@ -9,7 +9,9 @@ import {
   addExercise,
   addSet,
   cardioMinutes,
+  cardioSteps,
   completedSetCount,
+  formatSteps,
   moveExercise,
   removeExercise,
   removeSet,
@@ -55,6 +57,7 @@ export function WorkoutEditor({
   );
   const kcal = estimateWorkoutCalories(workout, bodyWeightLb);
   const minutes = cardioMinutes(workout);
+  const steps = cardioSteps(workout);
   const sets = completedSetCount(workout);
 
   return (
@@ -74,6 +77,12 @@ export function WorkoutEditor({
           <span className="flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 shadow-sm">
             <AppIcon name="activity" className="h-3.5 w-3.5 text-energy" />
             {minutes} min cardio
+          </span>
+        ) : null}
+        {steps > 0 ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 shadow-sm">
+            <AppIcon name="trend" className="h-3.5 w-3.5 text-energy" />
+            {formatSteps(steps)}
           </span>
         ) : null}
         {sets.total > 0 ? (

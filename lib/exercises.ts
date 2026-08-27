@@ -70,6 +70,16 @@ const CARDIO: string[] = [
   "Swimming",
   "HIIT",
   "Hiking",
+  "Basketball training",
+  "Basketball game",
+  "Soccer",
+  "Football",
+  "Tennis",
+  "Volleyball",
+  "Pickleball",
+  "Boxing",
+  "Dance",
+  "Martial arts",
 ];
 
 export const EXERCISE_LIBRARY: ExerciseTemplate[] = [
@@ -127,6 +137,12 @@ export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
     exercises: ["Treadmill", "Rowing machine"],
   },
   {
+    id: "basketball",
+    title: "Basketball",
+    group: "cardio",
+    exercises: ["Basketball training", "Basketball game"],
+  },
+  {
     id: "five-a",
     title: "5x5 A",
     group: "full-body",
@@ -140,7 +156,8 @@ export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
   },
 ];
 
-const CARDIO_HINT = /walk|jog|run|treadmill|bike|cycl|row|elliptical|jump rope|stair|swim|hiit|hike|cardio/;
+const CARDIO_HINT =
+  /walk|jog|run|treadmill|bike|cycl|row|elliptical|jump rope|stair|swim|hiit|hike|cardio|basketball|soccer|football|tennis|volleyball|pickleball|boxing|dance|martial/;
 
 export function kindForExercise(name: string): ExerciseKind {
   const found = EXERCISE_LIBRARY.find((item) => item.name.toLowerCase() === name.trim().toLowerCase());

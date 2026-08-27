@@ -39,7 +39,17 @@ export function isAppState(value: unknown): value is AppState {
 }
 
 function defaultCardio(): CardioLog {
-  return { minutes: 20, distanceMiles: null, intensity: "moderate" };
+  return { minutes: 20, distanceMiles: null, steps: null, intensity: "moderate" };
+}
+
+export function normalizeCardio(cardio: Partial<CardioLog> | null | undefined): CardioLog {
+  if (!cardio) return defaultCardio();
+  return {
+    minutes: cardio.minutes ?? null,
+    distanceMiles: cardio.distanceMiles ?? null,
+    steps: cardio.steps ?? null,
+    intensity: cardio.intensity ?? "moderate",
+  };
 }
 
 export function normalizeExercise(exercise: ExerciseEntry): ExerciseEntry {
@@ -49,7 +59,7 @@ export function normalizeExercise(exercise: ExerciseEntry): ExerciseEntry {
     kind,
     notes: exercise.notes ?? "",
     sets: kind === "strength" ? exercise.sets ?? [] : exercise.sets ?? [],
-    cardio: kind === "cardio" ? (exercise.cardio ?? defaultCardio()) : null,
+    cardio: kind === "cardio" ? normalizeCardio(exercise.cardio) : null,
   };
 }
 
@@ -346,4 +356,15 @@ export function cardioMinutes(workout: Workout): number {
     if (exercise.kind !== "cardio") return sum;
     return sum + (exercise.cardio?.minutes ?? 0);
   }, 0);
+}
+
+export function cardioSteps(workout: Workout): number {
+  return workout.exercises.reduce((sum, exercise) => {
+    if (exercise.kind !== "cardio") return sum;
+    return sum + (exercise.cardio?.steps ?? 0);
+  }, 0);
+}
+
+export function formatSteps(steps: number): string {
+  return `${steps.toLocaleString()} step${steps === 1 ? "" : "s"}`;
 }
