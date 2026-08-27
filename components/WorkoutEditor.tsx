@@ -104,7 +104,9 @@ export function WorkoutEditor({
         className="mt-2 grid gap-3"
         items={workout.exercises}
         getId={(exercise) => exercise.id}
-        onReorder={(fromIndex, toIndex) => onChange(moveExercise(workout, fromIndex, toIndex))}
+        onReorder={(fromIndex, toIndex) => {
+          onChange(moveExercise(workout, fromIndex, toIndex));
+        }}
         renderItem={(exercise, _index, handle) => (
           <ExerciseBlock
             exercise={exercise}

@@ -52,8 +52,16 @@ export function SortableList<T>({
   className?: string;
 }) {
   const itemRefs = useRef(new Map<string, HTMLDivElement | null>());
+  const itemsRef = useRef(items);
+  const getIdRef = useRef(getId);
+  const onReorderRef = useRef(onReorder);
   const [drag, setDrag] = useState<DragState | null>(null);
   const dragRef = useRef<DragState | null>(null);
+  const draggingId = drag?.id ?? null;
+
+  itemsRef.current = items;
+  getIdRef.current = getId;
+  onReorderRef.current = onReorder;
 
   const setItemRef = useCallback((id: string, node: HTMLDivElement | null) => {
     if (node) itemRefs.current.set(id, node);
@@ -65,25 +73,24 @@ export function SortableList<T>({
   }, [drag]);
 
   useEffect(() => {
-    if (!drag) return;
+    if (!draggingId) return;
 
     function onPointerMove(event: PointerEvent) {
       const current = dragRef.current;
       if (!current) return;
       const tops: number[] = [];
       const heights: number[] = [];
-      for (const item of items) {
-        const id = getId(item);
+      for (const item of itemsRef.current) {
+        const id = getIdRef.current(item);
         const node = itemRefs.current.get(id);
         if (!node) continue;
         const rect = node.getBoundingClientRect();
-        // Undo visual shift so hit-testing uses resting layout positions.
         const shift = Number(node.dataset.shiftY || 0);
         tops.push(rect.top - shift);
         heights.push(rect.height);
       }
       const overIndex = indexFromPointerY(event.clientY, tops, heights);
-      const next = {
+      const next: DragState = {
         ...current,
         overIndex,
         offsetY: event.clientY - current.originY,
@@ -99,7 +106,7 @@ export function SortableList<T>({
       document.body.style.userSelect = "";
       document.body.style.cursor = "";
       if (commit && current && current.fromIndex !== current.overIndex) {
-        onReorder(current.fromIndex, current.overIndex);
+        onReorderRef.current(current.fromIndex, current.overIndex);
       }
     }
 
@@ -120,8 +127,10 @@ export function SortableList<T>({
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerCancel);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
     };
-  }, [drag, getId, items, onReorder]);
+  }, [draggingId]);
 
   function startDrag(id: string, index: number, event: ReactPointerEvent<HTMLButtonElement>) {
     if (event.button !== 0) return;

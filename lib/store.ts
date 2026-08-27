@@ -250,9 +250,10 @@ export function moveExercise(
   fromIndex: number,
   toIndex: number,
 ): Workout {
+  const exercises = reorderList(workout.exercises, fromIndex, toIndex);
   return {
     ...workout,
-    exercises: reorderList(workout.exercises, fromIndex, toIndex),
+    exercises,
   };
 }
 
