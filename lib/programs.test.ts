@@ -4,12 +4,15 @@ import {
   copyPlanFromPerson,
   createPlan,
   importProgram,
+  isRestPlan,
   parseImportedProgram,
   planForDate,
   planForWeekday,
   savePlanForWeek,
   setDayMirror,
+  setDayRest,
   upsertPlan,
+  workoutPlanForDate,
   WORKOUT_PROGRAMS,
 } from "@/lib/programs";
 
@@ -226,5 +229,27 @@ describe("programs", () => {
     expect(copied?.mirrorFrom).toBeNull();
     expect(copied?.title).toBe("Push");
     expect(copied?.exercises[0].name).toBe("Overhead press");
+  });
+
+  it("tracks intentional rest days separately from unplanned days", () => {
+    let plans = setDayRest([], {
+      personId: "mark",
+      weekday: 0,
+      weekStart: null,
+    });
+    const rest = planForWeekday(plans, "mark", 0);
+    expect(isRestPlan(rest)).toBe(true);
+    expect(rest?.title).toBe("Rest");
+    expect(workoutPlanForDate(plans, "mark", new Date("2026-08-23T12:00:00"))).toBeUndefined();
+    expect(planForDate(plans, "mark", new Date("2026-08-23T12:00:00"))?.kind).toBe("rest");
+
+    plans = setDayRest(plans, {
+      personId: "mark",
+      weekday: 3,
+      weekStart: "2026-08-24",
+      alsoUsual: false,
+    });
+    expect(isRestPlan(planForWeekday(plans, "mark", 3, "2026-08-24"))).toBe(true);
+    expect(planForWeekday(plans, "mark", 3)).toBeUndefined();
   });
 });

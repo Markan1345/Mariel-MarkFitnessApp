@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { WORKOUT_TEMPLATES } from "@/lib/exercises";
 import { PEOPLE, PERSON_IDS } from "@/lib/people";
-import { planForDate, plansForPerson } from "@/lib/programs";
+import { planForDate, plansForPerson, workoutPlanForDate } from "@/lib/programs";
 import { defaultStartChoices, type StartChoice } from "@/lib/start";
 import type { CustomPlan, PersonId, Workout } from "@/lib/types";
 import { WEEKDAYS } from "@/lib/weekdays";
@@ -83,7 +83,7 @@ function TogetherStartSheetInner({
               personId={id}
               last={lastWorkouts[id]}
               plans={plansForPerson(plans, id)}
-              todayPlan={planForDate(plans, id, now)}
+              todayPlan={workoutPlanForDate(plans, id, now)}
               workouts={workouts}
               value={choices[id]}
               onChange={(choice) => setChoices((current) => ({ ...current, [id]: choice }))}
@@ -128,7 +128,7 @@ function PersonChoices({
         : value.type === "repeat"
           ? "repeat"
           : "empty";
-  const extras = plans.filter((plan) => plan.id !== todayPlan?.id).slice(0, 4);
+  const extras = plans.filter((plan) => plan.id !== todayPlan?.id && plan.kind !== "rest").slice(0, 4);
 
   return (
     <section className={`person-${personId} mb-5`}>

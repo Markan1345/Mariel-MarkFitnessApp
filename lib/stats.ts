@@ -1,4 +1,5 @@
-import type { PersonId, Workout } from "./types";
+import type { CustomPlan, PersonId, Workout } from "./types";
+import { isRestPlan, planForDate } from "./programs";
 import { startOfLocalDay, startOfWeek } from "./weekdays";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -41,7 +42,18 @@ export function workoutsThisWeek(workouts: Workout[], now = new Date()): Workout
   });
 }
 
-export function lastSevenDays(workouts: Workout[], now = new Date()): { date: Date; trained: boolean }[] {
+export function lastSevenDays(
+  workouts: Workout[],
+  nowOrOptions:
+    | Date
+    | {
+        plans?: CustomPlan[];
+        personId?: PersonId;
+        now?: Date;
+      } = new Date(),
+): { date: Date; trained: boolean; rest: boolean }[] {
+  const options = nowOrOptions instanceof Date ? { now: nowOrOptions } : nowOrOptions;
+  const now = options.now ?? new Date();
   const today = startOfLocalDay(now);
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(today.getTime() - (6 - index) * DAY_MS);
@@ -49,7 +61,10 @@ export function lastSevenDays(workouts: Workout[], now = new Date()): { date: Da
       const started = startOfLocalDay(new Date(workout.startedAt));
       return started.getTime() === date.getTime();
     });
-    return { date, trained };
+    const rest =
+      Boolean(options.plans && options.personId) &&
+      isRestPlan(planForDate(options.plans!, options.personId!, date));
+    return { date, trained, rest };
   });
 }
 

@@ -1,4 +1,4 @@
-import { planForDate } from "@/lib/programs";
+import { workoutPlanForDate } from "@/lib/programs";
 import { createWorkout, duplicateWorkout } from "@/lib/store";
 import type { CustomPlan, PersonId, Workout, WorkoutTemplate } from "@/lib/types";
 
@@ -34,7 +34,7 @@ export function defaultStartChoices(
   now = new Date(),
 ): Record<PersonId, StartChoice> {
   const forPerson = (personId: PersonId): StartChoice => {
-    const plan = planForDate(plans, personId, now);
+    const plan = workoutPlanForDate(plans, personId, now);
     return plan ? { type: "plan", plan } : { type: "empty" };
   };
   return { mark: forPerson("mark"), mariel: forPerson("mariel") };
