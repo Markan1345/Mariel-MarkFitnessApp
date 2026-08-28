@@ -9,6 +9,7 @@ import type {
   SetEntry,
   Workout,
 } from "./types";
+import { effectiveCardioSteps } from "./cardio-steps";
 import { createId } from "./ids";
 import { kindForExercise } from "./exercises";
 import { reorderList } from "./reorder";
@@ -18,7 +19,7 @@ export { reorderList } from "./reorder";
 export const STORAGE_KEY = "mm-fitness-v1";
 
 export function emptyState(): AppState {
-  return { version: 2, workouts: [], plans: [], weights: [] };
+  return { version: 2, workouts: [], plans: [], weights: [], stepLogs: [] };
 }
 
 export function isLegacyState(value: unknown): value is { version: 1; workouts: Workout[] } {
@@ -34,12 +35,23 @@ export function isAppState(value: unknown): value is AppState {
     candidate.version === 2 &&
     Array.isArray(candidate.workouts) &&
     (candidate.plans === undefined || Array.isArray(candidate.plans)) &&
-    (candidate.weights === undefined || Array.isArray(candidate.weights))
+    (candidate.weights === undefined || Array.isArray(candidate.weights)) &&
+    (candidate.stepLogs === undefined || Array.isArray(candidate.stepLogs))
   );
 }
 
 function defaultCardio(): CardioLog {
-  return { minutes: 20, distanceMiles: null, intensity: "moderate" };
+  return { minutes: 20, distanceMiles: null, steps: null, intensity: "moderate" };
+}
+
+export function normalizeCardio(cardio: Partial<CardioLog> | null | undefined): CardioLog {
+  if (!cardio) return defaultCardio();
+  return {
+    minutes: cardio.minutes ?? null,
+    distanceMiles: cardio.distanceMiles ?? null,
+    steps: cardio.steps ?? null,
+    intensity: cardio.intensity ?? "moderate",
+  };
 }
 
 export function normalizeExercise(exercise: ExerciseEntry): ExerciseEntry {
@@ -49,7 +61,7 @@ export function normalizeExercise(exercise: ExerciseEntry): ExerciseEntry {
     kind,
     notes: exercise.notes ?? "",
     sets: kind === "strength" ? exercise.sets ?? [] : exercise.sets ?? [],
-    cardio: kind === "cardio" ? (exercise.cardio ?? defaultCardio()) : null,
+    cardio: kind === "cardio" ? normalizeCardio(exercise.cardio) : null,
   };
 }
 
@@ -82,6 +94,7 @@ export function parseState(raw: string | null): AppState {
         workouts: parsed.workouts.map(normalizeWorkout),
         plans: (parsed.plans ?? []).map(normalizePlan),
         weights: parsed.weights ?? [],
+        stepLogs: parsed.stepLogs ?? [],
       };
     }
     if (isLegacyState(parsed)) {
@@ -90,6 +103,7 @@ export function parseState(raw: string | null): AppState {
         workouts: parsed.workouts.map(normalizeWorkout),
         plans: [],
         weights: [],
+        stepLogs: [],
       };
     }
   } catch {
@@ -346,4 +360,15 @@ export function cardioMinutes(workout: Workout): number {
     if (exercise.kind !== "cardio") return sum;
     return sum + (exercise.cardio?.minutes ?? 0);
   }, 0);
+}
+
+export function cardioSteps(workout: Workout): number {
+  return workout.exercises.reduce((sum, exercise) => {
+    if (exercise.kind !== "cardio") return sum;
+    return sum + effectiveCardioSteps(exercise);
+  }, 0);
+}
+
+export function formatSteps(steps: number): string {
+  return `${steps.toLocaleString()} step${steps === 1 ? "" : "s"}`;
 }

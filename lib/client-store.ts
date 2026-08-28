@@ -70,6 +70,7 @@ function collectRemovedIds(previous: AppState, next: AppState): string[] {
     ...next.workouts.map((item) => item.id),
     ...next.plans.map((item) => item.id),
     ...next.weights.map((item) => item.id),
+    ...(next.stepLogs ?? []).map((item) => item.id),
   ]);
   const removed: string[] = [];
   for (const item of previous.workouts) {
@@ -79,6 +80,9 @@ function collectRemovedIds(previous: AppState, next: AppState): string[] {
     if (!nextIds.has(item.id)) removed.push(item.id);
   }
   for (const item of previous.weights) {
+    if (!nextIds.has(item.id)) removed.push(item.id);
+  }
+  for (const item of previous.stepLogs ?? []) {
     if (!nextIds.has(item.id)) removed.push(item.id);
   }
   return removed;

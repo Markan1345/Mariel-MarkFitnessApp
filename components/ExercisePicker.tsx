@@ -49,7 +49,7 @@ export function ExercisePicker({
             autoFocus
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search lift, cardio, or type a custom name"
+            placeholder="Search lift, cardio, basketball, or a custom name"
             className="input-shell mt-3 h-11 px-4"
           />
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">

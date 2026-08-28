@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  datesInMonth,
   datesInWeek,
+  formatMonthLabel,
   formatWeekRange,
   localDateKey,
   nextWeekStart,
@@ -23,5 +25,14 @@ describe("weekdays", () => {
       "2026-08-30",
     ]);
     expect(formatWeekRange(nextWeekStart(tuesday))).toContain("31");
+  });
+
+  it("lists every local day in the calendar month", () => {
+    const august = new Date(2026, 7, 27);
+    const days = datesInMonth(august).map(localDateKey);
+    expect(days[0]).toBe("2026-08-01");
+    expect(days.at(-1)).toBe("2026-08-31");
+    expect(days).toHaveLength(31);
+    expect(formatMonthLabel(august)).toContain("August");
   });
 });

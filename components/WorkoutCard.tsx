@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppIcon } from "@/components/AppIcon";
-import { cardioMinutes, completedSetCount } from "@/lib/store";
+import { cardioMinutes, cardioSteps, completedSetCount, formatSteps } from "@/lib/store";
 import { DEFAULT_BODY_WEIGHT_LB, estimateWorkoutCalories, formatCalories } from "@/lib/calories";
 import { formatDateLabel, formatDuration, formatTimeLabel } from "@/lib/stats";
 import { PEOPLE } from "@/lib/people";
@@ -20,6 +20,7 @@ export function WorkoutCard({
 }) {
   const { done, total } = completedSetCount(workout);
   const minutes = cardioMinutes(workout);
+  const steps = cardioSteps(workout);
   const kcal = estimateWorkoutCalories(workout, bodyWeightLb);
   const live = !workout.finishedAt;
   const person = PEOPLE[workout.personId];
@@ -52,6 +53,7 @@ export function WorkoutCard({
           <AppIcon name="dumbbell" className="h-3.5 w-3.5" />
           {workout.exercises.length} move{workout.exercises.length === 1 ? "" : "s"}
           {minutes > 0 ? ` · ${minutes} min cardio` : ""}
+          {steps > 0 ? ` · ${formatSteps(steps)}` : ""}
         </span>
         <span className="flex items-center gap-1 rounded-full bg-bg px-2.5 py-1.5">
           <AppIcon name="timer" className="h-3.5 w-3.5" />

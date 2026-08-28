@@ -49,6 +49,21 @@ export function datesInWeek(weekStart: Date): Date[] {
   return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 }
 
+export function startOfMonth(date: Date): Date {
+  const day = startOfLocalDay(date);
+  return new Date(day.getFullYear(), day.getMonth(), 1);
+}
+
+export function datesInMonth(date: Date): Date[] {
+  const start = startOfMonth(date);
+  const count = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
+  return Array.from({ length: count }, (_, index) => addDays(start, index));
+}
+
+export function formatMonthLabel(date: Date): string {
+  return startOfMonth(date).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+}
+
 export function formatWeekRange(weekStart: Date): string {
   const start = startOfLocalDay(weekStart);
   const end = addDays(start, 6);

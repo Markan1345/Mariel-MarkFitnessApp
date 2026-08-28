@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchExercises, WORKOUT_TEMPLATES } from "@/lib/exercises";
+import { kindForExercise, searchExercises, WORKOUT_TEMPLATES } from "@/lib/exercises";
 import {
   formatDuration,
   greeting,
@@ -76,8 +76,13 @@ describe("stats", () => {
 describe("exercises", () => {
   it("searches the library and keeps starter templates", () => {
     expect(searchExercises("bench").map((item) => item.name)).toContain("Barbell bench press");
-    expect(WORKOUT_TEMPLATES.map((item) => item.id)).toEqual(
-      expect.arrayContaining(["push", "pull", "legs"]),
+    expect(searchExercises("basket").map((item) => item.name)).toEqual(
+      expect.arrayContaining(["Basketball training", "Basketball game"]),
     );
+    expect(WORKOUT_TEMPLATES.map((item) => item.id)).toEqual(
+      expect.arrayContaining(["push", "pull", "legs", "basketball"]),
+    );
+    expect(kindForExercise("Basketball game")).toBe("cardio");
+    expect(kindForExercise("Pickup basketball")).toBe("cardio");
   });
 });

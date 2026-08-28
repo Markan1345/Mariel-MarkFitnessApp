@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppNav } from "@/components/AppNav";
 import { AppIcon } from "@/components/AppIcon";
 import { LiftProgressPanel } from "@/components/LiftProgressPanel";
@@ -17,6 +18,7 @@ import type { PersonId } from "@/lib/types";
 type WeightMode = "body" | "lifts";
 
 export default function WeightPage() {
+  const router = useRouter();
   const { state, patch } = useFitnessStore();
   const [personId, setPersonId] = useState<PersonId>("mark");
   const [mode, setMode] = useState<WeightMode>("body");
@@ -25,6 +27,12 @@ export default function WeightPage() {
   const entries = weightsForPerson(state.weights, personId);
   const trend = weightTrend(state.weights, personId);
   const chartEntries = useMemo(() => entries.slice(-30), [entries]);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "steps") {
+      router.replace("/steps");
+    }
+  }, [router]);
 
   function save() {
     if (pounds === null || Number.isNaN(pounds) || pounds <= 0 || !isDayKey(date)) return;

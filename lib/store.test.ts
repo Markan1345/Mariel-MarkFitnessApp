@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addExercise,
   addSet,
+  cardioSteps,
   completedSetCount,
   createWorkout,
   createPairedWorkouts,
@@ -144,6 +145,52 @@ describe("store", () => {
     });
     expect(workout.exercises[0].kind).toBe("cardio");
     expect(workout.exercises[0].sets).toEqual([]);
-    expect(workout.exercises[0].cardio?.minutes).toBe(20);
+    expect(workout.exercises[0].cardio).toEqual({
+      minutes: 20,
+      distanceMiles: null,
+      steps: null,
+      intensity: "moderate",
+    });
+
+    const parsed = parseState(
+      JSON.stringify({
+        version: 2,
+        workouts: [
+          {
+            ...workout,
+            exercises: [
+              {
+                ...workout.exercises[0],
+                cardio: { minutes: 25, distanceMiles: 1.2, intensity: "hard" },
+              },
+            ],
+          },
+        ],
+        plans: [],
+        weights: [],
+      }),
+    );
+    expect(parsed.workouts[0].exercises[0].cardio).toEqual({
+      minutes: 25,
+      distanceMiles: 1.2,
+      steps: null,
+      intensity: "hard",
+    });
+    const treadmill = { ...workout, exercises: parsed.workouts[0].exercises };
+    expect(cardioSteps(treadmill)).toBe(25 * 160);
+
+    const hoop = createWorkout({
+      personId: "mark",
+      title: "Hoops",
+      exerciseNames: ["Basketball game"],
+    });
+    hoop.exercises[0].cardio = {
+      minutes: 45,
+      distanceMiles: null,
+      steps: 8500,
+      intensity: "hard",
+    };
+    expect(hoop.exercises[0].kind).toBe("cardio");
+    expect(cardioSteps(hoop)).toBe(8500);
   });
 });

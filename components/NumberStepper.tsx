@@ -9,12 +9,14 @@ export function NumberStepper({
   step = 1,
   min = 0,
   suffix,
+  wide = false,
 }: {
   value: number | null;
   onChange: (value: number | null) => void;
   step?: number;
   min?: number;
   suffix?: string;
+  wide?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const numeric = value ?? 0;
@@ -44,7 +46,7 @@ export function NumberStepper({
       </button>
       <input
         inputMode="decimal"
-        className="input-shell h-9 w-20 text-center font-extrabold tabular-nums"
+        className={`input-shell h-9 text-center font-extrabold tabular-nums ${wide ? "w-28" : "w-20"}`}
         value={text}
         onFocus={(event) => {
           setDraft(text);
