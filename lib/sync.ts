@@ -69,22 +69,19 @@ export function isSyncEnvelope(value: unknown): value is SyncEnvelope {
 }
 
 function entityStamp(item: Workout | CustomPlan | WeightEntry | DailyStepLog): string {
-  if ("finishedAt" in item) {
+  if ("startedAt" in item) {
     return `${item.finishedAt ?? ""}|${item.startedAt}|${item.exercises.length}|${item.notes}`;
   }
-  if ("createdAt" in item) {
+  if ("weekday" in item) {
     return `${item.createdAt}|${item.title}|${item.exercises.length}|${item.kind ?? ""}|${item.mirrorFrom ?? ""}`;
   }
-  if ("entries" in item && Array.isArray(item.entries)) {
-    const entriesStamp = item.entries
-      .map((entry) => `${entry.id}|${entry.steps}|${entry.label ?? ""}|${entry.updatedAt}`)
-      .join(";");
-    return `${item.date}|${entriesStamp}|${item.updatedAt}`;
+  if ("pounds" in item) {
+    return `${item.date}|${item.pounds}`;
   }
-  if ("phoneSteps" in item) {
-    return `${item.date}|${item.phoneSteps}|${item.updatedAt}`;
-  }
-  return `${item.date}|${item.pounds}`;
+  const entriesStamp = item.entries
+    .map((entry) => `${entry.id}|${entry.steps}|${entry.label ?? ""}|${entry.updatedAt}`)
+    .join(";");
+  return `${item.date}|${entriesStamp}|${item.updatedAt}`;
 }
 
 function pickPreferred<T extends { id: string }>(
