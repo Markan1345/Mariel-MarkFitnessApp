@@ -2,11 +2,13 @@ import type {
   AppState,
   CardioLog,
   CustomPlan,
+  DailyStepLog,
   ExerciseEntry,
   ExerciseKind,
   PersonId,
   PlannedExercise,
   SetEntry,
+  StepEntry,
   Workout,
 } from "./types";
 import { effectiveCardioSteps } from "./cardio-steps";
@@ -84,6 +86,45 @@ function normalizePlan(plan: CustomPlan): CustomPlan {
   };
 }
 
+function normalizeStepEntry(entry: StepEntry): StepEntry {
+  return {
+    ...entry,
+    steps: Math.max(0, Math.round(entry.steps)),
+    label: entry.label?.trim() || undefined,
+    updatedAt: entry.updatedAt ?? new Date().toISOString(),
+  };
+}
+
+function normalizeStepLog(raw: DailyStepLog | (Omit<DailyStepLog, "entries"> & { phoneSteps?: number; entries?: StepEntry[] })): DailyStepLog {
+  const updatedAt = raw.updatedAt ?? new Date().toISOString();
+  if (Array.isArray(raw.entries)) {
+    return {
+      id: raw.id,
+      personId: raw.personId,
+      date: raw.date,
+      entries: raw.entries.map(normalizeStepEntry),
+      updatedAt,
+    };
+  }
+  const legacySteps = "phoneSteps" in raw && typeof raw.phoneSteps === "number" ? raw.phoneSteps : 0;
+  return {
+    id: raw.id,
+    personId: raw.personId,
+    date: raw.date,
+    entries:
+      legacySteps > 0
+        ? [
+            {
+              id: createId("se"),
+              steps: Math.max(0, Math.round(legacySteps)),
+              updatedAt,
+            },
+          ]
+        : [],
+    updatedAt,
+  };
+}
+
 export function parseState(raw: string | null): AppState {
   if (!raw) return emptyState();
   try {
@@ -94,7 +135,7 @@ export function parseState(raw: string | null): AppState {
         workouts: parsed.workouts.map(normalizeWorkout),
         plans: (parsed.plans ?? []).map(normalizePlan),
         weights: parsed.weights ?? [],
-        stepLogs: parsed.stepLogs ?? [],
+        stepLogs: (parsed.stepLogs ?? []).map(normalizeStepLog),
       };
     }
     if (isLegacyState(parsed)) {

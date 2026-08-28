@@ -78,12 +78,19 @@ export interface WeightEntry {
   pounds: number;
 }
 
+export interface StepEntry {
+  id: string;
+  steps: number;
+  updatedAt: string;
+  /** Optional note, e.g. "Morning walk" or "Live counter". */
+  label?: string;
+}
+
 export interface DailyStepLog {
   id: string;
   personId: PersonId;
   date: string;
-  /** All-day / phone pedometer steps for this date. */
-  phoneSteps: number;
+  entries: StepEntry[];
   updatedAt: string;
 }
 

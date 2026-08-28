@@ -75,6 +75,12 @@ function entityStamp(item: Workout | CustomPlan | WeightEntry | DailyStepLog): s
   if ("createdAt" in item) {
     return `${item.createdAt}|${item.title}|${item.exercises.length}|${item.kind ?? ""}|${item.mirrorFrom ?? ""}`;
   }
+  if ("entries" in item && Array.isArray(item.entries)) {
+    const entriesStamp = item.entries
+      .map((entry) => `${entry.id}|${entry.steps}|${entry.label ?? ""}|${entry.updatedAt}`)
+      .join(";");
+    return `${item.date}|${entriesStamp}|${item.updatedAt}`;
+  }
   if ("phoneSteps" in item) {
     return `${item.date}|${item.phoneSteps}|${item.updatedAt}`;
   }
