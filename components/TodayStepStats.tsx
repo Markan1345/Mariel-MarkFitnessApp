@@ -19,24 +19,21 @@ export function TodayStepStats({
   return (
     <Link href="/steps" className="relative z-10 mt-3 block">
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-2xl bg-bg px-3 py-2.5">
+        <div className="rounded-2xl bg-bg px-2.5 py-2">
           <p className="text-[10px] font-bold tracking-wide text-muted uppercase">Today</p>
-          <p className="font-display mt-1 text-xl leading-none">{today.total.toLocaleString()}</p>
-          <p className="mt-0.5 text-[10px] font-medium text-muted">steps</p>
+          <p className="font-display mt-0.5 text-lg leading-none">{today.total.toLocaleString()}</p>
         </div>
-        <div className="rounded-2xl bg-bg px-3 py-2.5">
+        <div className="rounded-2xl bg-bg px-2.5 py-2">
           <p className="text-[10px] font-bold tracking-wide text-muted uppercase">Week</p>
-          <p className="font-display mt-1 text-xl leading-none">{week.toLocaleString()}</p>
-          <p className="mt-0.5 text-[10px] font-medium text-muted">steps</p>
+          <p className="font-display mt-0.5 text-lg leading-none">{week.toLocaleString()}</p>
         </div>
-        <div className="rounded-2xl bg-bg px-3 py-2.5">
+        <div className="rounded-2xl bg-bg px-2.5 py-2">
           <p className="text-[10px] font-bold tracking-wide text-muted uppercase">Month</p>
-          <p className="font-display mt-1 text-xl leading-none">{month.toLocaleString()}</p>
-          <p className="mt-0.5 text-[10px] font-medium text-muted">steps</p>
+          <p className="font-display mt-0.5 text-lg leading-none">{month.toLocaleString()}</p>
         </div>
       </div>
-      <div className="mt-3">
-        <StepBars days={days} />
+      <div className="mt-2">
+        <StepBars days={days} barMax={28} />
       </div>
       {today.phoneSteps > 0 || today.workoutSteps > 0 ? (
         <p className="mt-2 text-[10px] font-medium text-muted">

@@ -20,7 +20,7 @@ export function AppNav() {
     { href: "/weight", label: "Weight", icon: "scale", match: path.startsWith("/weight") },
     {
       href: "/session",
-      label: live ? "Session" : "Lift",
+      label: "Lift",
       icon: "dumbbell",
       match: path.startsWith("/session"),
     },
