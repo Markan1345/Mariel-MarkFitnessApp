@@ -1,14 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { createExercise, createWorkout, emptyState } from "@/lib/store";
+import { createExercise, createWorkout, emptyState, parseState } from "@/lib/store";
 import {
+  addStepEntry,
   averageDailySteps,
   createStepLog,
   dailyStepTotal,
+  LIVE_STEP_ENTRY_LABEL,
+  phoneStepsForDay,
+  removeStepEntry,
   stepHistory,
   stepHistoryForMonth,
   stepsThisMonth,
   stepsThisWeek,
-  upsertStepLog,
+  updateStepEntry,
+  upsertLabeledStepEntry,
   workoutStepsForDay,
 } from "@/lib/steps";
 
@@ -39,13 +44,76 @@ describe("daily steps", () => {
     expect(dailyStepTotal(state, "mariel", "2026-08-27").total).toBe(9000);
   });
 
-  it("replaces the same person and date when upserting", () => {
-    const first = createStepLog({ personId: "mark", date: "2026-08-27", phoneSteps: 1000 });
-    const next = { ...first, phoneSteps: 2500, id: "st_other" };
-    const logs = upsertStepLog(upsertStepLog([], first), next);
+  it("adds multiple phone entries for the same day", () => {
+    let logs = addStepEntry([], {
+      personId: "mark",
+      date: "2026-08-27",
+      steps: 2000,
+      label: "Morning",
+    });
+    logs = addStepEntry(logs, {
+      personId: "mark",
+      date: "2026-08-27",
+      steps: 1500,
+      label: "Afternoon",
+    });
     expect(logs).toHaveLength(1);
-    expect(logs[0].id).toBe(first.id);
-    expect(logs[0].phoneSteps).toBe(2500);
+    expect(logs[0].entries).toHaveLength(2);
+    expect(phoneStepsForDay(logs, "mark", "2026-08-27")).toBe(3500);
+  });
+
+  it("updates and removes individual entries", () => {
+    let logs = addStepEntry([], { personId: "mark", date: "2026-08-27", steps: 1000 });
+    const entryId = logs[0].entries[0].id;
+    logs = updateStepEntry(logs, {
+      personId: "mark",
+      date: "2026-08-27",
+      entryId,
+      steps: 2500,
+    });
+    expect(phoneStepsForDay(logs, "mark", "2026-08-27")).toBe(2500);
+    logs = removeStepEntry(logs, { personId: "mark", date: "2026-08-27", entryId });
+    expect(logs).toHaveLength(0);
+  });
+
+  it("upserts a labeled entry such as the live counter", () => {
+    let logs = addStepEntry([], { personId: "mark", date: "2026-08-27", steps: 500, label: "Walk" });
+    logs = upsertLabeledStepEntry(logs, {
+      personId: "mark",
+      date: "2026-08-27",
+      label: LIVE_STEP_ENTRY_LABEL,
+      steps: 120,
+    });
+    logs = upsertLabeledStepEntry(logs, {
+      personId: "mark",
+      date: "2026-08-27",
+      label: LIVE_STEP_ENTRY_LABEL,
+      steps: 340,
+    });
+    expect(logs[0].entries).toHaveLength(2);
+    expect(phoneStepsForDay(logs, "mark", "2026-08-27")).toBe(840);
+  });
+
+  it("migrates legacy phoneSteps logs when parsing state", () => {
+    const raw = JSON.stringify({
+      version: 2,
+      workouts: [],
+      plans: [],
+      weights: [],
+      stepLogs: [
+        {
+          id: "st_legacy",
+          personId: "mark",
+          date: "2026-08-27",
+          phoneSteps: 4321,
+          updatedAt: "2026-08-27T12:00:00.000Z",
+        },
+      ],
+    });
+    const state = parseState(raw);
+    expect(state.stepLogs[0].entries).toHaveLength(1);
+    expect(state.stepLogs[0].entries[0].steps).toBe(4321);
+    expect(phoneStepsForDay(state.stepLogs, "mark", "2026-08-27")).toBe(4321);
   });
 
   it("totals this week from Monday through Sunday", () => {

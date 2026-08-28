@@ -13,19 +13,26 @@ import { useFitnessStore } from "@/lib/use-fitness-store";
 import { formatSteps } from "@/lib/store";
 import { isDayKey, shiftDayKey } from "@/lib/numbers";
 import {
+  addStepEntry,
   averageDailySteps,
-  createStepLog,
+  clearPhoneStepsForDay,
   dailyStepTotal,
+  LIVE_STEP_ENTRY_LABEL,
+  liveCounterSteps,
+  phoneStepsForDay,
+  removeStepEntry,
+  stepEntriesForDay,
   stepHistory,
   stepHistoryForMonth,
   stepHistoryForWeek,
   stepsThisMonth,
   stepsThisWeek,
-  upsertStepLog,
+  updateStepEntry,
+  upsertLabeledStepEntry,
 } from "@/lib/steps";
 import { formatMonthLabel, formatWeekRange, startOfWeek } from "@/lib/weekdays";
 import { todayKey } from "@/lib/weight";
-import type { PersonId } from "@/lib/types";
+import type { PersonId, StepEntry } from "@/lib/types";
 
 type StepRange = "day" | "week" | "month";
 
@@ -33,9 +40,18 @@ export default function StepsPage() {
   const { state, patch } = useFitnessStore();
   const [personId, setPersonId] = useState<PersonId>("mark");
   const [range, setRange] = useState<StepRange>("day");
-  const [phoneSteps, setPhoneSteps] = useState<number | null>(null);
+  const [newEntrySteps, setNewEntrySteps] = useState<number | null>(null);
+  const [newEntryLabel, setNewEntryLabel] = useState("");
   const [date, setDate] = useState(todayKey());
   const todaySteps = dailyStepTotal(state, personId, todayKey());
+  const dayEntries = useMemo(
+    () => stepEntriesForDay(state.stepLogs ?? [], personId, date),
+    [state.stepLogs, personId, date],
+  );
+  const dayPhoneTotal = useMemo(
+    () => phoneStepsForDay(state.stepLogs ?? [], personId, date),
+    [state.stepLogs, personId, date],
+  );
   const recentDays = useMemo(() => stepHistory(state, personId, 7), [state, personId]);
   const weekDays = useMemo(() => stepHistoryForWeek(state, personId), [state, personId]);
   const monthDays = useMemo(() => stepHistoryForMonth(state, personId), [state, personId]);
@@ -48,34 +64,59 @@ export default function StepsPage() {
     .slice()
     .reverse();
 
-  function savePhoneLog() {
-    if (phoneSteps === null || Number.isNaN(phoneSteps) || phoneSteps < 0 || !isDayKey(date)) return;
+  function addPhoneEntry() {
+    if (newEntrySteps === null || Number.isNaN(newEntrySteps) || newEntrySteps < 0 || !isDayKey(date)) {
+      return;
+    }
     patch((current) => ({
       ...current,
-      stepLogs: upsertStepLog(
-        current.stepLogs ?? [],
-        createStepLog({ personId, date, phoneSteps: Math.round(phoneSteps) }),
-      ),
+      stepLogs: addStepEntry(current.stepLogs ?? [], {
+        personId,
+        date,
+        steps: Math.round(newEntrySteps),
+        label: newEntryLabel.trim() || undefined,
+      }),
     }));
-    setPhoneSteps(null);
+    setNewEntrySteps(null);
+    setNewEntryLabel("");
   }
 
-  function persistPhoneToday(nextPhoneSteps: number) {
+  function adjustEntry(entryId: string, steps: number | null) {
+    if (steps === null || Number.isNaN(steps) || steps < 0 || !isDayKey(date)) return;
     patch((current) => ({
       ...current,
-      stepLogs: upsertStepLog(
-        current.stepLogs ?? [],
-        createStepLog({ personId, date: todayKey(), phoneSteps: nextPhoneSteps }),
-      ),
+      stepLogs: updateStepEntry(current.stepLogs ?? [], {
+        personId,
+        date,
+        entryId,
+        steps: Math.round(steps),
+      }),
+    }));
+  }
+
+  function deleteEntry(entryId: string) {
+    patch((current) => ({
+      ...current,
+      stepLogs: removeStepEntry(current.stepLogs ?? [], { personId, date, entryId }),
+    }));
+  }
+
+  function persistLiveCounter(nextSteps: number) {
+    patch((current) => ({
+      ...current,
+      stepLogs: upsertLabeledStepEntry(current.stepLogs ?? [], {
+        personId,
+        date: todayKey(),
+        label: LIVE_STEP_ENTRY_LABEL,
+        steps: nextSteps,
+      }),
     }));
   }
 
   function removePhoneLog(day: string) {
     patch((current) => ({
       ...current,
-      stepLogs: (current.stepLogs ?? []).filter(
-        (entry) => !(entry.personId === personId && entry.date === day),
-      ),
+      stepLogs: clearPhoneStepsForDay(current.stepLogs ?? [], personId, day),
     }));
   }
 
@@ -99,19 +140,12 @@ export default function StepsPage() {
           </div>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-muted">
-          {PEOPLE[personId].name}&apos;s day, week, and month. Phone counting, logged cardio, and
-          pickup-game estimates all add in.
+          {PEOPLE[personId].name}&apos;s day, week, and month. Add multiple phone counts per day — they
+          add up. Logged cardio and pickup-game estimates count too.
         </p>
       </header>
       <StickyPersonBar>
-        <PersonTabs
-          active={personId}
-          onChange={(id) => {
-            setPersonId(id);
-            setPhoneSteps(dailyStepTotal(state, id, todayKey()).phoneSteps || null);
-          }}
-          live={{}}
-        />
+        <PersonTabs active={personId} onChange={setPersonId} live={{}} />
         <div className="mt-3 grid grid-cols-3 gap-2">
           {(
             [
@@ -179,8 +213,9 @@ export default function StepsPage() {
               <PhoneStepTracker
                 key={personId}
                 personId={personId}
-                phoneSteps={todaySteps.phoneSteps}
-                onChange={persistPhoneToday}
+                liveCounterSteps={liveCounterSteps(state.stepLogs ?? [], personId, todayKey())}
+                dayPhoneTotal={todaySteps.phoneSteps}
+                onChange={persistLiveCounter}
               />
             </div>
 
@@ -189,12 +224,17 @@ export default function StepsPage() {
                 <span className="accent-soft accent-text grid h-9 w-9 place-items-center rounded-xl">
                   <AppIcon name="plus" className="h-4 w-4" />
                 </span>
-                <h2 className="font-display text-2xl">Log phone steps</h2>
+                <div>
+                  <h2 className="font-display text-2xl">Phone step counts</h2>
+                  <p className="text-xs text-muted">
+                    {dayEntries.length > 0
+                      ? `${formatSteps(dayPhoneTotal)} from ${dayEntries.length} ${dayEntries.length === 1 ? "entry" : "entries"} on ${formatLongDate(date)}`
+                      : `Add one or more counts for ${formatLongDate(date)}.`}
+                  </p>
+                </div>
               </div>
-              <p className="mt-2 text-xs text-muted">
-                Paste a total from Apple Fitness or Google Fit, or type what you walked today.
-              </p>
-              <label className="mt-3 block text-xs tracking-[0.14em] text-muted uppercase">
+
+              <label className="mt-4 block text-xs tracking-[0.14em] text-muted uppercase">
                 Date
                 <input
                   type="text"
@@ -208,7 +248,7 @@ export default function StepsPage() {
               <div className="mt-2 flex gap-2">
                 {[
                   { label: "Today", value: todayKey() },
-                  { label: "7 days ago", value: shiftDayKey(todayKey(), -7) },
+                  { label: "Yesterday", value: shiftDayKey(todayKey(), -1) },
                 ].map((chip) => (
                   <button
                     key={chip.label}
@@ -222,22 +262,53 @@ export default function StepsPage() {
                   </button>
                 ))}
               </div>
-              <label className="mt-3 block text-xs tracking-[0.14em] text-muted uppercase">
-                Phone steps
-                <div className="mt-1">
-                  <NumberStepper
-                    value={phoneSteps}
-                    step={100}
-                    min={0}
-                    suffix="steps"
-                    wide
-                    onChange={(value) => setPhoneSteps(value == null ? null : Math.round(value))}
-                  />
+
+              {dayEntries.length > 0 ? (
+                <div className="mt-4 grid gap-2">
+                  {dayEntries.map((entry) => (
+                    <StepEntryRow
+                      key={entry.id}
+                      entry={entry}
+                      onAdjust={(steps) => adjustEntry(entry.id, steps)}
+                      onRemove={() => deleteEntry(entry.id)}
+                    />
+                  ))}
                 </div>
-              </label>
-              <button type="button" onClick={savePhoneLog} className="accent-action mt-4 w-full py-3">
-                Save phone steps
-              </button>
+              ) : (
+                <p className="mt-4 text-sm text-muted">
+                  Paste a total from Apple Fitness or Google Fit, or type what you walked.
+                </p>
+              )}
+
+              <div className="mt-4 rounded-2xl border border-dashed border-line bg-bg/70 p-3">
+                <p className="text-xs font-bold tracking-[0.14em] text-muted uppercase">Add another count</p>
+                <label className="mt-2 block text-xs text-muted">
+                  Label (optional)
+                  <input
+                    type="text"
+                    placeholder="Morning walk, Apple Fitness…"
+                    value={newEntryLabel}
+                    onChange={(event) => setNewEntryLabel(event.target.value)}
+                    className="input-shell mt-1 h-10 w-full px-3 text-sm"
+                  />
+                </label>
+                <label className="mt-3 block text-xs tracking-[0.14em] text-muted uppercase">
+                  Steps
+                  <div className="mt-1">
+                    <NumberStepper
+                      value={newEntrySteps}
+                      step={100}
+                      min={0}
+                      suffix="steps"
+                      wide
+                      onChange={(value) => setNewEntrySteps(value == null ? null : Math.round(value))}
+                    />
+                  </div>
+                </label>
+                <button type="button" onClick={addPhoneEntry} className="accent-action mt-3 w-full py-3">
+                  Add step count
+                </button>
+              </div>
             </section>
           </>
         ) : null}
@@ -280,6 +351,42 @@ export default function StepsPage() {
         </section>
       </main>
       <AppNav />
+    </div>
+  );
+}
+
+function StepEntryRow({
+  entry,
+  onAdjust,
+  onRemove,
+}: {
+  entry: StepEntry;
+  onAdjust: (steps: number | null) => void;
+  onRemove: () => void;
+}) {
+  const label = entry.label?.trim() || "Step count";
+
+  return (
+    <div className="rounded-2xl border border-line bg-paper px-3 py-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-extrabold">{label}</p>
+          <p className="text-xs text-muted">{formatSteps(entry.steps)}</p>
+        </div>
+        <button type="button" onClick={onRemove} className="text-xs text-muted">
+          Remove
+        </button>
+      </div>
+      <div className="mt-2">
+        <NumberStepper
+          value={entry.steps}
+          step={100}
+          min={0}
+          suffix="steps"
+          wide
+          onChange={onAdjust}
+        />
+      </div>
     </div>
   );
 }

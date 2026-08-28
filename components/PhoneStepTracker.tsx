@@ -9,24 +9,26 @@ import type { PersonId } from "@/lib/types";
 
 export function PhoneStepTracker({
   personId,
-  phoneSteps,
+  liveCounterSteps,
+  dayPhoneTotal,
   onChange,
 }: {
   personId: PersonId;
-  phoneSteps: number;
-  onChange: (phoneSteps: number) => void;
+  liveCounterSteps: number;
+  dayPhoneTotal: number;
+  onChange: (liveCounterSteps: number) => void;
 }) {
   const [status, setStatus] = useState<"idle" | "running" | "denied" | "unsupported">("idle");
-  const [live, setLive] = useState(phoneSteps);
-  const liveRef = useRef(phoneSteps);
+  const [live, setLive] = useState(liveCounterSteps);
+  const liveRef = useRef(liveCounterSteps);
   const runningRef = useRef(false);
   const stopRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (runningRef.current) return;
-    liveRef.current = phoneSteps;
-    setLive(phoneSteps);
-  }, [phoneSteps]);
+    liveRef.current = liveCounterSteps;
+    setLive(liveCounterSteps);
+  }, [liveCounterSteps]);
 
   useEffect(() => {
     if (!motionIsSupported()) setStatus("unsupported");
@@ -51,8 +53,8 @@ export function PhoneStepTracker({
     }
     runningRef.current = true;
     setStatus("running");
-    liveRef.current = phoneSteps;
-    setLive(phoneSteps);
+    liveRef.current = liveCounterSteps;
+    setLive(liveCounterSteps);
     let wake: { release: () => Promise<void> } | null = null;
     try {
       wake = (await navigator.wakeLock?.request("screen")) ?? null;
@@ -99,12 +101,12 @@ export function PhoneStepTracker({
 
   const hint =
     status === "unsupported"
-      ? "Automatic counting needs a phone browser. You can still type today’s total below."
+      ? "Automatic counting needs a phone browser. You can still add step counts below."
       : status === "denied"
-        ? "Motion access was blocked. Enable it in Settings, or type today’s total."
+        ? "Motion access was blocked. Enable it in Settings, or add counts manually."
         : status === "running"
           ? `Counting for ${PEOPLE[personId].name}. Keep this screen open and the phone on you.`
-          : `Counts ${PEOPLE[personId].name}'s steps while this page stays open.`;
+          : `Counts ${PEOPLE[personId].name}'s steps while this page stays open. Saved as a live counter entry.`;
 
   return (
     <section className="surface-card p-4">
@@ -118,7 +120,9 @@ export function PhoneStepTracker({
         </span>
       </div>
       <p className="font-display mt-3 text-4xl leading-none">{live.toLocaleString()}</p>
-      <p className="mt-1 text-sm text-muted">{formatSteps(live)} today from the phone</p>
+      <p className="mt-1 text-sm text-muted">
+        Live counter · {formatSteps(dayPhoneTotal)} total phone today
+      </p>
       <button
         type="button"
         onClick={() => void toggle()}
