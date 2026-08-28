@@ -62,11 +62,12 @@ export default function TogetherHome() {
             <span className="absolute right-2 bottom-1.5 left-2 h-0.5 rounded-full bg-energy" />
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {(
             [
               { href: "/plans", label: "Plan", detail: "Your week", icon: "calendar" },
-              { href: "/weight", label: "Weight", detail: "Body, lifts & steps", icon: "scale" },
+              { href: "/steps", label: "Steps", detail: "Day, week & month", icon: "steps" },
+              { href: "/weight", label: "Weight", detail: "Body & lifts", icon: "scale" },
               { href: "/history", label: "History", detail: "Past lifts", icon: "history" },
               { href: "/sync", label: "Sync", detail: "Phone & desktop", icon: "spark" },
             ] as { href: string; label: string; detail: string; icon: AppIconName }[]

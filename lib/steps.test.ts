@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createExercise, createWorkout, emptyState } from "@/lib/store";
 import {
+  averageDailySteps,
   createStepLog,
   dailyStepTotal,
   stepHistory,
+  stepHistoryForMonth,
+  stepsThisMonth,
   stepsThisWeek,
   upsertStepLog,
   workoutStepsForDay,
@@ -11,7 +14,7 @@ import {
 
 describe("daily steps", () => {
   it("sums phone logs and workout cardio steps for a day", () => {
-    let workout = createWorkout({
+    const workout = createWorkout({
       personId: "mark",
       title: "Hoops",
       exerciseNames: ["Basketball game"],
@@ -81,5 +84,39 @@ describe("daily steps", () => {
     );
     expect(history.map((day) => day.date)).toEqual(["2026-08-25", "2026-08-26", "2026-08-27"]);
     expect(history.map((day) => day.total)).toEqual([0, 3000, 5000]);
+  });
+
+  it("estimates pickup-game steps when minutes are logged without a step count", () => {
+    const workout = createWorkout({
+      personId: "mark",
+      title: "Pickup",
+      exerciseNames: ["Basketball pickup"],
+      startedAt: "2026-08-12T18:00:00",
+    });
+    workout.exercises[0].cardio = {
+      minutes: 40,
+      distanceMiles: null,
+      steps: null,
+      intensity: "moderate",
+    };
+    const state = { ...emptyState(), workouts: [workout] };
+    expect(workoutStepsForDay(state.workouts, "mark", "2026-08-12")).toBe(40 * 135);
+    expect(dailyStepTotal(state, "mark", "2026-08-12").total).toBe(5400);
+  });
+
+  it("totals this calendar month and averages days so far", () => {
+    const now = new Date(2026, 7, 12);
+    const state = {
+      ...emptyState(),
+      stepLogs: [
+        createStepLog({ personId: "mark", date: "2026-07-31", phoneSteps: 9999 }),
+        createStepLog({ personId: "mark", date: "2026-08-01", phoneSteps: 3000 }),
+        createStepLog({ personId: "mark", date: "2026-08-12", phoneSteps: 1500 }),
+      ],
+    };
+    expect(stepsThisMonth(state, "mark", now)).toBe(4500);
+    const month = stepHistoryForMonth(state, "mark", now);
+    expect(month).toHaveLength(31);
+    expect(averageDailySteps(month, now)).toBe(Math.round(4500 / 12));
   });
 });

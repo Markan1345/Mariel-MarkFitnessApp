@@ -38,6 +38,8 @@ describe("calories", () => {
     expect(metForCardio("Basketball training", "moderate")).toBe(6.5);
     expect(metForCardio("Basketball game", "hard")).toBe(10);
     expect(metForCardio("Pickup basketball game", "moderate")).toBe(8);
+    expect(metForCardio("Basketball pickup", "moderate")).toBe(8);
+    expect(metForCardio("Volleyball pickup", "easy")).toBe(3);
     expect(metForCardio("Morning basketball", "easy")).toBe(5);
   });
 

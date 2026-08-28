@@ -176,7 +176,8 @@ describe("store", () => {
       steps: null,
       intensity: "hard",
     });
-    expect(cardioSteps({ ...workout, exercises: parsed.workouts[0].exercises })).toBe(0);
+    const treadmill = { ...workout, exercises: parsed.workouts[0].exercises };
+    expect(cardioSteps(treadmill)).toBe(25 * 160);
 
     const hoop = createWorkout({
       personId: "mark",

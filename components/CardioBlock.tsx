@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { NumberStepper } from "./NumberStepper";
 import { AppIcon } from "./AppIcon";
 import { estimateExerciseCalories, formatCalories } from "@/lib/calories";
+import { estimatedCardioSteps, isEstimatedCardioSteps } from "@/lib/cardio-steps";
 import { formatSteps, normalizeCardio } from "@/lib/store";
 import type { CardioIntensity, ExerciseEntry } from "@/lib/types";
 
@@ -25,6 +26,8 @@ export function CardioBlock({
   const cardio = normalizeCardio(exercise.cardio);
   const kcal = Math.round(estimateExerciseCalories({ ...exercise, cardio }, bodyWeightLb));
   const fromSteps = (cardio.minutes ?? 0) <= 0 && (cardio.steps ?? 0) > 0;
+  const estimated = estimatedCardioSteps({ ...exercise, cardio });
+  const showingEstimate = isEstimatedCardioSteps({ ...exercise, cardio });
 
   function update(partial: Partial<typeof cardio>) {
     onChange({ ...exercise, cardio: { ...cardio, ...partial } });
@@ -83,6 +86,16 @@ export function CardioBlock({
           />
         </div>
       </label>
+      {showingEstimate ? (
+        <p className="mt-2 text-xs leading-relaxed text-muted">
+          About {formatSteps(estimated)} estimated from {cardio.minutes} min. Leave this blank to
+          count that toward today, or type a watch total to override.
+        </p>
+      ) : estimated > 0 && (cardio.steps ?? 0) > 0 ? (
+        <p className="mt-2 text-xs text-muted">
+          Using your logged steps instead of the {formatSteps(estimated)} estimate.
+        </p>
+      ) : null}
       <div className="mt-3 flex gap-1">
         {INTENSITIES.map((intensity) => (
           <button
@@ -100,6 +113,7 @@ export function CardioBlock({
       <p className="mt-3 text-sm text-muted">
         Est. {formatCalories(kcal)}
         {fromSteps && cardio.steps ? ` from ${formatSteps(cardio.steps)}` : ""}
+        {showingEstimate ? ` · ~${estimated.toLocaleString()} steps` : ""}
       </p>
       <input
         value={exercise.notes}

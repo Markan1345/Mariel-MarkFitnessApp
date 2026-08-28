@@ -2,7 +2,7 @@ import type { AppState, DailyStepLog, PersonId, Workout } from "./types";
 import { createId } from "./ids";
 import { cardioSteps } from "./store";
 import { localDayKey } from "./stats";
-import { datesInWeek, localDateKey, startOfWeek } from "./weekdays";
+import { datesInMonth, datesInWeek, localDateKey, startOfWeek } from "./weekdays";
 import { todayKey } from "./weight";
 
 export type StepDayTotal = {
@@ -105,4 +105,37 @@ export function todayStepTotal(
   now = new Date(),
 ): StepDayTotal {
   return dailyStepTotal(state, personId, todayKey(now));
+}
+
+export function stepHistoryForWeek(
+  state: Pick<AppState, "workouts" | "stepLogs">,
+  personId: PersonId,
+  now = new Date(),
+): StepDayTotal[] {
+  return datesInWeek(startOfWeek(now)).map((date) =>
+    dailyStepTotal(state, personId, localDateKey(date)),
+  );
+}
+
+export function stepHistoryForMonth(
+  state: Pick<AppState, "workouts" | "stepLogs">,
+  personId: PersonId,
+  now = new Date(),
+): StepDayTotal[] {
+  return datesInMonth(now).map((date) => dailyStepTotal(state, personId, localDateKey(date)));
+}
+
+export function stepsThisMonth(
+  state: Pick<AppState, "workouts" | "stepLogs">,
+  personId: PersonId,
+  now = new Date(),
+): number {
+  return stepHistoryForMonth(state, personId, now).reduce((sum, day) => sum + day.total, 0);
+}
+
+export function averageDailySteps(days: StepDayTotal[], now = new Date()): number {
+  const today = localDateKey(now);
+  const elapsed = days.filter((day) => day.date <= today);
+  if (elapsed.length === 0) return 0;
+  return Math.round(elapsed.reduce((sum, day) => sum + day.total, 0) / elapsed.length);
 }

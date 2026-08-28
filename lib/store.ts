@@ -9,6 +9,7 @@ import type {
   SetEntry,
   Workout,
 } from "./types";
+import { effectiveCardioSteps } from "./cardio-steps";
 import { createId } from "./ids";
 import { kindForExercise } from "./exercises";
 import { reorderList } from "./reorder";
@@ -364,7 +365,7 @@ export function cardioMinutes(workout: Workout): number {
 export function cardioSteps(workout: Workout): number {
   return workout.exercises.reduce((sum, exercise) => {
     if (exercise.kind !== "cardio") return sum;
-    return sum + (exercise.cardio?.steps ?? 0);
+    return sum + effectiveCardioSteps(exercise);
   }, 0);
 }
 
