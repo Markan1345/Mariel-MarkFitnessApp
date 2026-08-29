@@ -136,7 +136,9 @@ function workoutRichness(workout: Workout): number {
   }, 0);
 }
 
-function pickPreferred<T extends { id: string }>(
+type SyncEntity = Workout | CustomPlan | WeightEntry | DailyStepLog;
+
+function pickPreferred<T extends SyncEntity>(
   local: T | undefined,
   remote: T | undefined,
   preferRemote: boolean,
@@ -146,15 +148,15 @@ function pickPreferred<T extends { id: string }>(
   if (!remote) return local;
   if (stamp(local) === stamp(remote)) return preferRemote ? remote : local;
 
-  const localAt = entityUpdatedAt(local as Workout | CustomPlan | WeightEntry | DailyStepLog);
-  const remoteAt = entityUpdatedAt(remote as Workout | CustomPlan | WeightEntry | DailyStepLog);
+  const localAt = entityUpdatedAt(local);
+  const remoteAt = entityUpdatedAt(remote);
   if (localAt !== remoteAt) {
     return localAt > remoteAt ? local : remote;
   }
 
   if ("startedAt" in local && "startedAt" in remote) {
-    const localRich = workoutRichness(local as Workout);
-    const remoteRich = workoutRichness(remote as Workout);
+    const localRich = workoutRichness(local);
+    const remoteRich = workoutRichness(remote);
     if (localRich !== remoteRich) {
       return localRich > remoteRich ? local : remote;
     }
@@ -163,7 +165,7 @@ function pickPreferred<T extends { id: string }>(
   return preferRemote ? remote : local;
 }
 
-function mergeCollection<T extends { id: string }>(
+function mergeCollection<T extends SyncEntity>(
   local: T[],
   remote: T[],
   removed: Set<string>,
