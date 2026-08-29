@@ -31,8 +31,16 @@ describe("mergeAppStates", () => {
   it("keeps unique items from both sides and drops tombstones", () => {
     const localWorkout = createWorkout({ personId: "mark", title: "Local only" });
     const remoteWorkout = createWorkout({ personId: "mariel", title: "Remote only" });
-    const sharedLocal = createWorkout({ personId: "mark", title: "Shared old" });
-    const sharedRemote = { ...sharedLocal, title: "Shared new", notes: "updated" };
+    const sharedLocal = {
+      ...createWorkout({ personId: "mark", title: "Shared old", startedAt: "2026-08-27T10:00:00.000Z" }),
+      updatedAt: "2026-08-27T10:00:00.000Z",
+    };
+    const sharedRemote = {
+      ...sharedLocal,
+      title: "Shared new",
+      notes: "updated",
+      updatedAt: "2026-08-28T12:00:00.000Z",
+    };
     const removed = createWorkout({ personId: "mark", title: "Gone" });
 
     const local = {
@@ -47,6 +55,76 @@ describe("mergeAppStates", () => {
     const merged = mergeAppStates(local, remote, [removed.id], true);
     const titles = merged.workouts.map((workout) => workout.title).sort();
     expect(titles).toEqual(["Local only", "Remote only", "Shared new"]);
+  });
+
+  it("keeps locally logged sets when a newer remote envelope still has empty sets", () => {
+    const startedAt = "2026-08-28T18:00:00.000Z";
+    const base = createWorkout({
+      personId: "mark",
+      title: "Push",
+      exerciseNames: ["Barbell bench press"],
+      startedAt,
+    });
+    const remoteEmpty = {
+      ...base,
+      updatedAt: startedAt,
+    };
+    const localLogged = {
+      ...base,
+      updatedAt: "2026-08-28T18:45:00.000Z",
+      exercises: base.exercises.map((exercise) => ({
+        ...exercise,
+        sets: exercise.sets.map((set) => ({
+          ...set,
+          weight: 185,
+          reps: 5,
+          completed: true,
+        })),
+      })),
+    };
+
+    const merged = mergeAppStates(
+      { ...emptyState(), workouts: [localLogged] },
+      { ...emptyState(), workouts: [remoteEmpty] },
+      [],
+      true,
+    );
+
+    expect(merged.workouts).toHaveLength(1);
+    expect(merged.workouts[0]?.exercises[0]?.sets[0]?.weight).toBe(185);
+    expect(merged.workouts[0]?.exercises[0]?.sets[0]?.completed).toBe(true);
+  });
+
+  it("prefers richer logged sets when updatedAt ties on legacy workouts", () => {
+    const startedAt = "2026-08-28T17:00:00.000Z";
+    const base = createWorkout({
+      personId: "mariel",
+      title: "Legs",
+      exerciseNames: ["Back squat"],
+      startedAt,
+    });
+    const empty = { ...base, updatedAt: startedAt };
+    const logged = {
+      ...base,
+      updatedAt: startedAt,
+      exercises: base.exercises.map((exercise) => ({
+        ...exercise,
+        sets: exercise.sets.map((set) => ({
+          ...set,
+          weight: 135,
+          reps: 5,
+          completed: true,
+        })),
+      })),
+    };
+
+    const merged = mergeAppStates(
+      { ...emptyState(), workouts: [logged] },
+      { ...emptyState(), workouts: [empty] },
+      [],
+      true,
+    );
+    expect(merged.workouts[0]?.exercises[0]?.sets[0]?.weight).toBe(135);
   });
 
   it("merges weights and plans by id", () => {
