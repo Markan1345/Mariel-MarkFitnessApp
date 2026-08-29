@@ -270,12 +270,15 @@ export async function unpackEnvelope(
   };
 }
 
-export async function createSyncRoom(state: AppState, deviceId: string): Promise<{
+export async function createSyncRoom(
+  state: AppState,
+  deviceId: string,
+  passphrase = createPassphrase(),
+): Promise<{
   meta: Omit<SyncMeta, "lastStatus" | "lastError" | "lastSyncedLabel">;
   code: string;
   envelope: SyncEnvelope;
 }> {
-  const passphrase = createPassphrase();
   const envelope = buildEnvelope({ state, deviceId, removedIds: [] });
   const payload = await packEnvelope(passphrase, envelope);
   const binId = await publishSnapshot(passphrase, {

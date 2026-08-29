@@ -96,7 +96,7 @@ export default function SyncPage() {
 
   function unlink() {
     unlinkHouseholdSync();
-    setMessage("This device is local-only again.");
+    setMessage("Automatic sync is off on this browser. Reopen the app to turn it back on.");
     setError("");
   }
 
@@ -145,7 +145,7 @@ export default function SyncPage() {
         <p className="eyebrow">Across your devices</p>
         <h1 className="font-display mt-1 text-[2.65rem] leading-none">Sync</h1>
         <p className="mt-2 text-sm font-medium text-muted">
-          Keep Mark &amp; Mariel&apos;s plans, workouts, and weights the same on phone and desktop.
+          Your workouts, plans, weights, and steps stay in sync across every browser automatically.
         </p>
       </header>
 
@@ -159,7 +159,7 @@ export default function SyncPage() {
                   ? lastLabel
                     ? `Last sync ${lastLabel}`
                     : "Waiting for the first sync"
-                  : "Each browser keeps its own copy until you link them"}
+                  : "Sync starts automatically when you open the app"}
               </p>
             </div>
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-energy/15 text-energy">
@@ -208,9 +208,9 @@ export default function SyncPage() {
           </section>
         ) : (
           <section className="surface-card px-4 py-4">
-            <p className="text-sm font-extrabold">Start on this device</p>
+            <p className="text-sm font-extrabold">Start a separate household</p>
             <p className="mt-1 text-xs text-muted">
-              Creates a private household room and a code for your other devices.
+              Optional: create a private room with its own code instead of the shared automatic sync.
             </p>
             <button
               type="button"
