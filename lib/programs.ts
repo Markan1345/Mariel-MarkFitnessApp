@@ -193,6 +193,7 @@ export function createPlan(input: {
     kind,
     mirrorFrom: kind === "rest" ? null : (input.mirrorFrom ?? null),
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -378,22 +379,26 @@ export function copyPlanFromPerson(
 }
 
 export function upsertPlan(plans: CustomPlan[], next: CustomPlan): CustomPlan[] {
+  const touched: CustomPlan = {
+    ...next,
+    updatedAt: new Date().toISOString(),
+  };
   const withoutSameDay =
-    next.weekday === null
+    touched.weekday === null
       ? plans
       : plans.filter(
           (plan) =>
             !(
-              plan.personId === next.personId &&
-              plan.weekday === next.weekday &&
-              sameWeekStart(plan.weekStart, next.weekStart) &&
-              plan.id !== next.id
+              plan.personId === touched.personId &&
+              plan.weekday === touched.weekday &&
+              sameWeekStart(plan.weekStart, touched.weekStart) &&
+              plan.id !== touched.id
             ),
         );
-  const index = withoutSameDay.findIndex((plan) => plan.id === next.id);
-  if (index === -1) return [next, ...withoutSameDay];
+  const index = withoutSameDay.findIndex((plan) => plan.id === touched.id);
+  if (index === -1) return [touched, ...withoutSameDay];
   const copy = [...withoutSameDay];
-  copy[index] = next;
+  copy[index] = touched;
   return copy;
 }
 

@@ -22,12 +22,16 @@ export function bodyWeightPounds(
 }
 
 export function upsertWeight(entries: WeightEntry[], next: WeightEntry): WeightEntry[] {
+  const touched: WeightEntry = {
+    ...next,
+    updatedAt: new Date().toISOString(),
+  };
   const index = entries.findIndex(
-    (entry) => entry.personId === next.personId && entry.date === next.date,
+    (entry) => entry.personId === touched.personId && entry.date === touched.date,
   );
-  if (index === -1) return [...entries, next];
+  if (index === -1) return [...entries, touched];
   const copy = [...entries];
-  copy[index] = { ...next, id: copy[index].id };
+  copy[index] = { ...touched, id: copy[index].id };
   return copy;
 }
 
@@ -35,12 +39,14 @@ export function createWeightEntry(input: {
   personId: PersonId;
   date: string;
   pounds: number;
+  updatedAt?: string;
 }): WeightEntry {
   return {
     id: createId("wt"),
     personId: input.personId,
     date: input.date,
     pounds: input.pounds,
+    updatedAt: input.updatedAt ?? new Date().toISOString(),
   };
 }
 

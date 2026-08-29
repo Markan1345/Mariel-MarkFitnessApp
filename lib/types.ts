@@ -51,6 +51,8 @@ export interface Workout {
   notes: string;
   exercises: ExerciseEntry[];
   pairId: string | null;
+  /** Bumped on every local edit so sync can last-write-wins per workout. */
+  updatedAt?: string;
 }
 
 export type PlanKind = "workout" | "rest";
@@ -69,6 +71,8 @@ export interface CustomPlan {
   /** When set, this day follows that person's workout for the same weekday. */
   mirrorFrom?: PersonId | null;
   createdAt: string;
+  /** Bumped when the plan changes so sync keeps the latest edit. */
+  updatedAt?: string;
 }
 
 export interface WeightEntry {
@@ -76,6 +80,8 @@ export interface WeightEntry {
   personId: PersonId;
   date: string;
   pounds: number;
+  /** Bumped when the entry changes so sync keeps the latest weigh-in. */
+  updatedAt?: string;
 }
 
 export interface StepEntry {
