@@ -6,7 +6,7 @@ A shared mobile website for two people. Log both sessions at the same time, incl
 
 Open that link on your phones or desktop. Add it to the home screen for a full-screen app.
 
-Data is saved in the browser and can **sync across devices**. Open **Sync**, create a household on one device, then enter the same code on your other phone or computer. Changes push automatically and pull when you reopen the app.
+Data is saved in the browser and **syncs automatically across devices**. Open the app on any phone or computer and your workouts, plans, weights, and steps will be there. The **Sync** page still lets you create a separate household or restore from a backup file.
 
 ## What you can do
 
@@ -18,7 +18,7 @@ Data is saved in the browser and can **sync across devices**. Open **Sync**, cre
 - Count **phone steps** while the app is open, or paste a daily total from Fitness/Health
 - Log specific cardio sessions such as **basketball training**, **basketball game**, soccer, and more
 - Log **body weight in pounds**, view it by date, and follow the trend
-- **Sync phone and desktop** with a shared household code (plus optional JSON backup)
+- **Sync phone and desktop** automatically (plus optional JSON backup or a separate household code)
 
 ## Run it locally
 

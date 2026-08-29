@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { ensureSyncRuntime } from "@/lib/sync-client";
+import { ensureAutoHouseholdSync } from "@/lib/sync-client";
 
-/** Starts background cloud sync when this device is linked. */
+/** Starts automatic cloud sync so data follows you across browsers. */
 export function SyncBootstrap() {
   useEffect(() => {
-    ensureSyncRuntime();
+    void ensureAutoHouseholdSync();
   }, []);
   return null;
 }

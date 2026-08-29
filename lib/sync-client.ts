@@ -2,6 +2,7 @@
 
 import type { AppState } from "./types";
 import { readState, writeState, consumeSkipPush } from "./client-store";
+import { getDefaultHouseholdPassphrase } from "./site";
 import {
   SYNC_META_KEY,
   applyRemoteToLocal,
@@ -20,11 +21,23 @@ import {
 
 const CHANGE_EVENT = "mm-fitness-sync-change";
 const REMOVED_KEY = "mm-fitness-sync-removed-v1";
+const AUTO_SYNC_OPT_OUT_KEY = "mm-fitness-sync-auto-opt-out-v1";
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let pullTimer: ReturnType<typeof setInterval> | null = null;
 let inFlight: Promise<void> | null = null;
 let bootstrapped = false;
+let autoSyncStarted = false;
+
+function clearAutoSyncOptOut() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(AUTO_SYNC_OPT_OUT_KEY);
+}
+
+function isAutoSyncOptedOut(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(AUTO_SYNC_OPT_OUT_KEY) === "1";
+}
 
 function emitSyncChange() {
   if (typeof window !== "undefined") {
@@ -113,7 +126,65 @@ async function runExclusive(task: () => Promise<void>) {
   await inFlight;
 }
 
+async function applyLinkedHousehold(input: {
+  passphrase: string;
+  deviceId: string;
+  remote: Awaited<ReturnType<typeof fetchRemoteEnvelope>>;
+  allowCreate: boolean;
+}): Promise<void> {
+  const { passphrase, deviceId, remote, allowCreate } = input;
+
+  if (remote) {
+    const local = readState();
+    const preferRemote =
+      local.workouts.length +
+        local.plans.length +
+        local.weights.length +
+        (local.stepLogs?.length ?? 0) ===
+      0;
+    const merged = applyRemoteToLocal({
+      local,
+      remote,
+      localRemovedIds: readRemovedIds(),
+      preferRemote,
+    });
+    writeRemovedIds(merged.removedIds);
+    writeState(merged.state, { fromSync: true });
+    const envelope = buildEnvelope({
+      state: merged.state,
+      deviceId,
+      removedIds: merged.removedIds,
+    });
+    const binId = await pushEnvelope(passphrase, envelope);
+    writeSyncMeta({
+      binId,
+      passphrase,
+      deviceId,
+      lastSyncedAt: envelope.updatedAt,
+      lastStatus: "synced",
+      lastError: null,
+      lastSyncedLabel: countdownLabel(envelope.updatedAt),
+    });
+    return;
+  }
+
+  if (!allowCreate) {
+    throw new Error("No sync room found for that code");
+  }
+
+  const state = readState();
+  const { meta } = await createSyncRoom(state, deviceId, passphrase);
+  writeRemovedIds([]);
+  writeSyncMeta({
+    ...meta,
+    lastStatus: "synced",
+    lastError: null,
+    lastSyncedLabel: countdownLabel(meta.lastSyncedAt),
+  });
+}
+
 export async function createHouseholdSync(): Promise<string> {
+  clearAutoSyncOptOut();
   const deviceId = readSyncMeta()?.deviceId ?? createDeviceId();
   const state = readState();
   writeSyncMeta({
@@ -151,6 +222,7 @@ export async function createHouseholdSync(): Promise<string> {
 }
 
 export async function joinHouseholdSync(code: string): Promise<void> {
+  clearAutoSyncOptOut();
   const parsed = parseSyncCode(code);
   if (!parsed) {
     throw new Error("Use a code like LT1-K7M2P9QXH4W8N3YT");
@@ -168,33 +240,11 @@ export async function joinHouseholdSync(code: string): Promise<void> {
 
   try {
     const remote = await fetchRemoteEnvelope(parsed.passphrase);
-    if (!remote) throw new Error("No sync room found for that code");
-    const local = readState();
-    const preferRemote =
-      local.workouts.length + local.plans.length + local.weights.length + (local.stepLogs?.length ?? 0) ===
-      0;
-    const merged = applyRemoteToLocal({
-      local,
-      remote,
-      localRemovedIds: readRemovedIds(),
-      preferRemote,
-    });
-    writeRemovedIds(merged.removedIds);
-    writeState(merged.state, { fromSync: true });
-    const envelope = buildEnvelope({
-      state: merged.state,
-      deviceId,
-      removedIds: merged.removedIds,
-    });
-    const binId = await pushEnvelope(parsed.passphrase, envelope);
-    writeSyncMeta({
-      binId,
+    await applyLinkedHousehold({
       passphrase: parsed.passphrase,
       deviceId,
-      lastSyncedAt: envelope.updatedAt,
-      lastStatus: "synced",
-      lastError: null,
-      lastSyncedLabel: countdownLabel(envelope.updatedAt),
+      remote,
+      allowCreate: false,
     });
     ensureSyncRuntime();
   } catch (error) {
@@ -209,6 +259,9 @@ export async function joinHouseholdSync(code: string): Promise<void> {
 export function unlinkHouseholdSync() {
   writeSyncMeta(null);
   writeRemovedIds([]);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(AUTO_SYNC_OPT_OUT_KEY, "1");
+  }
   if (pushTimer) {
     clearTimeout(pushTimer);
     pushTimer = null;
@@ -311,4 +364,46 @@ export function ensureSyncRuntime() {
       /* surfaced via sync meta */
     });
   }
+}
+
+/** Link this browser to the shared household cloud room when sync is not opted out. */
+export async function ensureAutoHouseholdSync(): Promise<void> {
+  if (typeof window === "undefined" || autoSyncStarted) return;
+  autoSyncStarted = true;
+
+  if (!isAutoSyncOptedOut() && !isSyncLinked()) {
+    const passphrase = getDefaultHouseholdPassphrase();
+    const deviceId = createDeviceId();
+    writeSyncMeta({
+      binId: "",
+      passphrase,
+      deviceId,
+      lastSyncedAt: null,
+      lastStatus: "syncing",
+      lastError: null,
+      lastSyncedLabel: null,
+    });
+
+    try {
+      const remote = await fetchRemoteEnvelope(passphrase);
+      await applyLinkedHousehold({
+        passphrase,
+        deviceId,
+        remote,
+        allowCreate: true,
+      });
+    } catch (error) {
+      writeSyncMeta({
+        binId: "",
+        passphrase: "",
+        deviceId,
+        lastSyncedAt: null,
+        lastStatus: "error",
+        lastError: error instanceof Error ? error.message : "Could not auto-sync",
+        lastSyncedLabel: null,
+      });
+    }
+  }
+
+  ensureSyncRuntime();
 }
