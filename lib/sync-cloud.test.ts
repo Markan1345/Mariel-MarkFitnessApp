@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createWorkout, emptyState } from "@/lib/store";
 import { createWeightEntry } from "@/lib/weight";
+import { getDefaultHouseholdPassphrase } from "@/lib/site";
 import {
   applyRemoteToLocal,
   buildEnvelope,
@@ -70,6 +71,59 @@ describe("cloud household sync", () => {
         "Desktop pull day",
         "Phone push day",
       ]);
+    },
+    30_000,
+  );
+
+  it(
+    "uses the shared default passphrase like a second browser would",
+    async () => {
+      const passphrase = getDefaultHouseholdPassphrase();
+      const browserA = {
+        ...emptyState(),
+        workouts: [
+          createWorkout({
+            personId: "mark",
+            title: "Browser A workout",
+            exerciseNames: ["Squat"],
+          }),
+        ],
+      };
+
+      await createSyncRoom(browserA, "browser-a", passphrase);
+
+      const browserBLocal = emptyState();
+      const remote = await fetchRemoteEnvelope(passphrase);
+      const merged = applyRemoteToLocal({
+        local: browserBLocal,
+        remote: remote!,
+        localRemovedIds: [],
+        preferRemote: true,
+      });
+
+      expect(merged.state.workouts[0]?.title).toBe("Browser A workout");
+
+      const browserBState = {
+        ...merged.state,
+        weights: [createWeightEntry({ personId: "mariel", date: "2026-08-29", pounds: 145 })],
+      };
+      await pushEnvelope(
+        passphrase,
+        buildEnvelope({
+          state: browserBState,
+          deviceId: "browser-b",
+          removedIds: merged.removedIds,
+        }),
+      );
+
+      const browserAPull = await fetchRemoteEnvelope(passphrase);
+      const backOnA = applyRemoteToLocal({
+        local: browserA,
+        remote: browserAPull!,
+        localRemovedIds: [],
+        preferRemote: true,
+      });
+      expect(backOnA.state.weights[0]?.pounds).toBe(145);
     },
     30_000,
   );
