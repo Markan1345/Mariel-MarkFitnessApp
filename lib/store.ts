@@ -9,6 +9,7 @@ import type {
   PlannedExercise,
   SetEntry,
   StepEntry,
+  WeightEntry,
   Workout,
 } from "./types";
 import { effectiveCardioSteps } from "./cardio-steps";
@@ -72,6 +73,7 @@ function normalizeWorkout(workout: Workout): Workout {
     ...workout,
     pairId: workout.pairId ?? null,
     exercises: (workout.exercises ?? []).map(normalizeExercise),
+    updatedAt: workout.updatedAt ?? workout.finishedAt ?? workout.startedAt,
   };
 }
 
@@ -83,6 +85,14 @@ function normalizePlan(plan: CustomPlan): CustomPlan {
     exercises: plan.exercises ?? [],
     kind: plan.kind === "rest" ? "rest" : "workout",
     mirrorFrom: plan.mirrorFrom ?? null,
+    updatedAt: plan.updatedAt ?? plan.createdAt,
+  };
+}
+
+function normalizeWeight(entry: WeightEntry): WeightEntry {
+  return {
+    ...entry,
+    updatedAt: entry.updatedAt ?? `${entry.date}T12:00:00.000Z`,
   };
 }
 
@@ -134,7 +144,7 @@ export function parseState(raw: string | null): AppState {
         version: 2,
         workouts: parsed.workouts.map(normalizeWorkout),
         plans: (parsed.plans ?? []).map(normalizePlan),
-        weights: parsed.weights ?? [],
+        weights: (parsed.weights ?? []).map(normalizeWeight),
         stepLogs: (parsed.stepLogs ?? []).map(normalizeStepLog),
       };
     }
@@ -171,12 +181,13 @@ export function activeWorkoutForPerson(
 }
 
 export function upsertWorkout(state: AppState, workout: Workout): AppState {
-  const index = state.workouts.findIndex((item) => item.id === workout.id);
+  const nextWorkout = normalizeWorkout(workout);
+  const index = state.workouts.findIndex((item) => item.id === nextWorkout.id);
   if (index === -1) {
-    return { ...state, workouts: [workout, ...state.workouts] };
+    return { ...state, workouts: [nextWorkout, ...state.workouts] };
   }
   const next = [...state.workouts];
-  next[index] = workout;
+  next[index] = nextWorkout;
   return { ...state, workouts: next };
 }
 
@@ -221,6 +232,13 @@ export function createExercise(
   };
 }
 
+export function touchWorkout(
+  workout: Workout,
+  updatedAt = new Date().toISOString(),
+): Workout {
+  return { ...workout, updatedAt };
+}
+
 export function createWorkout(input: {
   personId: PersonId;
   title: string;
@@ -232,15 +250,17 @@ export function createWorkout(input: {
   const planned =
     input.planned ??
     (input.exerciseNames ?? []).map((name) => ({ name, kind: kindForExercise(name) }));
+  const startedAt = input.startedAt ?? new Date().toISOString();
   return {
     id: createId("wo"),
     personId: input.personId,
     title: input.title,
-    startedAt: input.startedAt ?? new Date().toISOString(),
+    startedAt,
     finishedAt: null,
     notes: "",
     exercises: planned.map((item) => createExercise(item.name, item.kind)),
     pairId: input.pairId ?? null,
+    updatedAt: startedAt,
   };
 }
 
@@ -356,7 +376,7 @@ export function finishWorkout(
   workout: Workout,
   finishedAt = new Date().toISOString(),
 ): Workout {
-  return { ...workout, finishedAt };
+  return { ...workout, finishedAt, updatedAt: finishedAt };
 }
 
 export function duplicateWorkout(
@@ -369,6 +389,7 @@ export function duplicateWorkout(
     startedAt,
     finishedAt: null,
     pairId: null,
+    updatedAt: startedAt,
     exercises: workout.exercises.map((exercise) =>
       normalizeExercise({
         ...exercise,

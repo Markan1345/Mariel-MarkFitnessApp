@@ -4,6 +4,7 @@ import {
   parseState,
   STORAGE_KEY,
   emptyState,
+  touchWorkout,
   upsertWorkout,
   upsertWorkouts,
   deleteWorkout,
@@ -89,11 +90,12 @@ function collectRemovedIds(previous: AppState, next: AppState): string[] {
 }
 
 export function saveWorkout(workout: Workout) {
-  writeState(upsertWorkout(readState(), workout));
+  writeState(upsertWorkout(readState(), touchWorkout(workout)));
 }
 
 export function saveWorkouts(workouts: Workout[]) {
-  writeState(upsertWorkouts(readState(), workouts));
+  const at = new Date().toISOString();
+  writeState(upsertWorkouts(readState(), workouts.map((workout) => touchWorkout(workout, at))));
 }
 
 export function removeWorkout(id: string) {

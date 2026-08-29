@@ -68,20 +68,72 @@ export function isSyncEnvelope(value: unknown): value is SyncEnvelope {
   );
 }
 
+function workoutExerciseStamp(exercise: Workout["exercises"][number]): string {
+  const sets = (exercise.sets ?? [])
+    .map((set) => `${set.id}:${set.weight ?? ""}:${set.reps ?? ""}:${set.completed ? 1 : 0}`)
+    .join(",");
+  const cardio = exercise.cardio
+    ? `${exercise.cardio.minutes ?? ""}:${exercise.cardio.distanceMiles ?? ""}:${exercise.cardio.steps ?? ""}:${exercise.cardio.intensity}`
+    : "";
+  return `${exercise.id}|${exercise.name}|${exercise.kind ?? ""}|${exercise.notes}|${sets}|${cardio}`;
+}
+
 function entityStamp(item: Workout | CustomPlan | WeightEntry | DailyStepLog): string {
   if ("startedAt" in item) {
-    return `${item.finishedAt ?? ""}|${item.startedAt}|${item.exercises.length}|${item.notes}`;
+    const exercises = (item.exercises ?? []).map(workoutExerciseStamp).join(";");
+    return `${item.finishedAt ?? ""}|${item.startedAt}|${item.title}|${item.notes}|${exercises}|${item.updatedAt ?? ""}`;
   }
   if ("weekday" in item) {
-    return `${item.createdAt}|${item.title}|${item.exercises.length}|${item.kind ?? ""}|${item.mirrorFrom ?? ""}`;
+    const exercises = (item.exercises ?? [])
+      .map((exercise) => `${exercise.name}:${exercise.kind}`)
+      .join(",");
+    return `${item.createdAt}|${item.updatedAt ?? ""}|${item.title}|${item.weekday}|${item.weekStart ?? ""}|${exercises}|${item.kind ?? ""}|${item.mirrorFrom ?? ""}`;
   }
   if ("pounds" in item) {
-    return `${item.date}|${item.pounds}`;
+    return `${item.date}|${item.pounds}|${item.updatedAt ?? ""}`;
   }
   const entriesStamp = item.entries
     .map((entry) => `${entry.id}|${entry.steps}|${entry.label ?? ""}|${entry.updatedAt}`)
     .join(";");
   return `${item.date}|${entriesStamp}|${item.updatedAt}`;
+}
+
+function entityUpdatedAt(item: Workout | CustomPlan | WeightEntry | DailyStepLog): string {
+  if ("updatedAt" in item && typeof item.updatedAt === "string" && item.updatedAt) {
+    return item.updatedAt;
+  }
+  if ("startedAt" in item) {
+    return item.finishedAt ?? item.startedAt;
+  }
+  if ("weekday" in item) {
+    return item.createdAt;
+  }
+  if ("pounds" in item) {
+    return `${item.date}T12:00:00.000Z`;
+  }
+  return item.updatedAt;
+}
+
+/** Prefer the workout that actually has logged lifts/cardio when timestamps tie. */
+function workoutRichness(workout: Workout): number {
+  return workout.exercises.reduce((sum, exercise) => {
+    if ((exercise.kind ?? "strength") === "cardio") {
+      const cardio = exercise.cardio;
+      return (
+        sum +
+        (cardio?.minutes ?? 0) +
+        (cardio?.distanceMiles ?? 0) * 10 +
+        (cardio?.steps ?? 0) / 100
+      );
+    }
+    return (
+      sum +
+      exercise.sets.reduce((setSum, set) => {
+        const logged = set.completed || (set.weight ?? 0) > 0 || (set.reps ?? 0) > 0;
+        return setSum + (logged ? 10 : 0) + (set.weight ?? 0) + (set.reps ?? 0);
+      }, 0)
+    );
+  }, 0);
 }
 
 function pickPreferred<T extends { id: string }>(
@@ -93,6 +145,21 @@ function pickPreferred<T extends { id: string }>(
   if (!local) return remote;
   if (!remote) return local;
   if (stamp(local) === stamp(remote)) return preferRemote ? remote : local;
+
+  const localAt = entityUpdatedAt(local as Workout | CustomPlan | WeightEntry | DailyStepLog);
+  const remoteAt = entityUpdatedAt(remote as Workout | CustomPlan | WeightEntry | DailyStepLog);
+  if (localAt !== remoteAt) {
+    return localAt > remoteAt ? local : remote;
+  }
+
+  if ("startedAt" in local && "startedAt" in remote) {
+    const localRich = workoutRichness(local as Workout);
+    const remoteRich = workoutRichness(remote as Workout);
+    if (localRich !== remoteRich) {
+      return localRich > remoteRich ? local : remote;
+    }
+  }
+
   return preferRemote ? remote : local;
 }
 
