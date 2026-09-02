@@ -145,7 +145,8 @@ export default function SyncPage() {
         <p className="eyebrow">Across your devices</p>
         <h1 className="font-display mt-1 text-[2.65rem] leading-none">Sync</h1>
         <p className="mt-2 text-sm font-medium text-muted">
-          Keep Mark &amp; Mariel&apos;s plans, workouts, and weights the same on phone and desktop.
+          Extra device linking. Your profile login already keeps data across browsers — use Sync when
+          you want to share a household code without signing in again.
         </p>
       </header>
 

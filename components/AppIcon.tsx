@@ -14,7 +14,8 @@ export type AppIconName =
   | "moon"
   | "timer"
   | "trend"
-  | "steps";
+  | "steps"
+  | "user";
 
 const paths: Record<AppIconName, ReactNode> = {
   activity: <path d="M3 12h4l2.2-6 4 12 2.3-6H21" />,
@@ -79,6 +80,12 @@ const paths: Record<AppIconName, ReactNode> = {
       <circle cx="8" cy="5" r="2" />
       <path d="M8 7v5l-2.5 7M8 12h4l2 7" />
       <path d="M6 21h.01M16 21h.01" />
+    </>
+  ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 19.5c1.8-3.2 4.1-4.5 7-4.5s5.2 1.3 7 4.5" />
     </>
   ),
 };

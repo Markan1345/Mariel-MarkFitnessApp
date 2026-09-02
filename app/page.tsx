@@ -65,6 +65,7 @@ export default function TogetherHome() {
         <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {(
             [
+              { href: "/account", label: "Account", detail: "Profile & login", icon: "user" },
               { href: "/plans", label: "Plan", detail: "Your week", icon: "calendar" },
               { href: "/steps", label: "Steps", detail: "Day, week & month", icon: "steps" },
               { href: "/weight", label: "Weight", detail: "Body & lifts", icon: "scale" },

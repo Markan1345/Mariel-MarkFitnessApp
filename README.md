@@ -6,10 +6,11 @@ A shared mobile website for two people. Log both sessions at the same time, incl
 
 Open that link on your phones or desktop. Add it to the home screen for a full-screen app.
 
-Data is saved in the browser and can **sync across devices**. Open **Sync**, create a household on one device, then enter the same code on your other phone or computer. Changes push automatically and pull when you reopen the app.
+Create a **profile** (username + password) so your workouts stay saved under your account. Sign in on another browser to restore the same data. You can also **sync across devices** with a household code on the Sync page, or use an optional JSON backup.
 
 ## What you can do
 
+- Create a profile and sign in so data follows you across browsers
 - Start both workouts together, with a different session for each person
 - Build a **custom workout for each weekday**
 - Import weight programs (5x5, push/pull/legs, upper/lower, and more) or a JSON file

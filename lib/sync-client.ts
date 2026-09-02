@@ -42,7 +42,7 @@ function readRemovedIds(): string[] {
   }
 }
 
-function writeRemovedIds(ids: string[]) {
+export function writeRemovedIds(ids: string[]) {
   window.localStorage.setItem(REMOVED_KEY, JSON.stringify(normalizeRemovedIds(ids)));
 }
 
